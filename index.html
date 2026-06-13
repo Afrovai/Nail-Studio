@@ -770,14 +770,40 @@ function rebuildEditQuienSelect(){
 }
 
 // ── DATA ───────────────────────────────────────────────────────────
+function normalizeQuien(name){
+  if(!name) return name;
+  if(name==='Fernanda') return name;
+  // Match against current workers array (case-insensitive)
+  const match = workers.find(w=>w.nombre.toLowerCase()===name.toLowerCase().trim());
+  if(match) return match.nombre;
+  // Legacy aliases for known misspellings before the workers array existed
+  const aliases = {'ivete':'Ivette','ivett':'Ivette','ivete ':'Ivette'};
+  return aliases[name.toLowerCase().trim()] || name;
+}
+
 async function fetchData(){
   try{
     const res = await fetch(SCRIPT_URL+'?action=getAll&t='+Date.now());
     const json = await res.json();
-    allData = json.services||[];
-    allAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
-    saveAll();
-  }catch(e){ showToast('Sin conexión — datos locales',true); }
+    const serverServices = (json.services||[]).map(s=>({
+      ...s,
+      quien: normalizeQuien(s.quien),
+      registradoPor: normalizeQuien(s.registradoPor)
+    }));
+    // Keep any pending services whose timestamp doesn't exist in server data yet
+    const unsynced = getPending()
+      .filter(p => p.action==='addService')
+      .filter(p => !serverServices.some(s => s.timestamp && s.timestamp===p.timestamp))
+      .map(p => ({...p, id: p.timestamp||('local_'+Date.now())}));
+    // Guard: never replace existing local data with an empty server response
+    if(serverServices.length === 0 && allData.length > 0){
+      showToast('Servidor sin datos — manteniendo datos locales', true);
+    } else {
+      allData = [...serverServices, ...unsynced];
+      allAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
+      saveAll();
+    }
+  }catch(e){ showToast('Sin conexión — datos locales', true); }
   populateMonths(); renderResumen(); renderHistorial(); checkPending();
 }
 async function apiPost(payload){ const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)}); return await r.json(); }
