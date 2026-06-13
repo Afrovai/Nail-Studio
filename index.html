@@ -255,6 +255,17 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 .toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;font-family:'DM Sans',sans-serif}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--danger)}
+/* CLIENT DETAIL EXPAND */
+.client-row{cursor:pointer;user-select:none;border-radius:var(--r8);margin:0 -8px;padding-left:8px;padding-right:8px;transition:background 0.15s}
+.client-row:hover{background:var(--rose-pale)}
+.client-row:hover .svc-name{color:var(--rose)}
+.client-chevron{display:inline-block;transition:transform 0.2s;color:var(--ink-soft);font-size:13px;margin-left:4px;vertical-align:middle}
+.client-row.expanded .client-chevron{transform:rotate(90deg)}
+.client-detail{display:none;padding:4px 0 8px}
+.client-detail.open{display:block}
+.client-detail-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:12px;border-bottom:1px solid var(--border-soft)}
+.client-detail-row:last-child{border-bottom:none}
+.client-detail-tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
 </style>
 </head>
 <body>
@@ -1281,12 +1292,34 @@ function renderResumen(){
 
   const allSvcsMonth = isF ? allData.filter(s=>monthKey(s.fecha)===mk) : allData.filter(s=>monthKey(s.fecha)===mk&&s.quien===currentWorkerObj?.nombre);
   const bc={};
-  allSvcsMonth.forEach(sv=>{const k=sv.nombre+' '+sv.apellido;if(!bc[k])bc[k]={n:k,t:0,c:0};bc[k].t+=parseInt(sv.precio);bc[k].c++;});
+  allSvcsMonth.forEach(sv=>{const k=sv.nombre+' '+sv.apellido;if(!bc[k])bc[k]={n:k,t:0,c:0,svcs:[]};bc[k].t+=parseInt(sv.precio);bc[k].c++;bc[k].svcs.push(sv);});
   const rows=Object.values(bc).sort((a,b)=>b.t-a.t);
-  document.getElementById('res-clientes').innerHTML=rows.length?rows.map(c=>`
-    <div class="svc-item">
-      <div><div class="svc-name">${c.n}</div><div class="svc-meta">${c.c} servicio${c.c>1?'s':''}</div></div>
-      <div class="svc-amount">${fmt(c.t)}</div>
+  document.getElementById('res-clientes').innerHTML=rows.length?rows.map((c,i)=>`
+    <div>
+      <div class="svc-item client-row" id="crow-${i}" onclick="toggleClientDetail(${i})">
+        <div>
+          <div class="svc-name">${c.n}<span class="client-chevron">›</span></div>
+          <div class="svc-meta">${c.c} servicio${c.c>1?'s':''}</div>
+        </div>
+        <div class="svc-amount">${fmt(c.t)}</div>
+      </div>
+      <div class="client-detail" id="cdet-${i}">
+        ${c.svcs.sort((a,b)=>normalizeDate(a.fecha).localeCompare(normalizeDate(b.fecha))).map(s=>{
+          const isPend=s.pago==='Pendiente';
+          const tagBg=s.pago==='Efectivo'?'#E8F5EE':isPend?'#FFFBF0':'#EEF2FB';
+          const tagColor=s.pago==='Efectivo'?'#1A6B3C':isPend?'#8A6200':'#1A3B8A';
+          return `<div class="client-detail-row">
+            <div>
+              <span style="font-weight:500">${fmtDateShort(s.fecha)}</span>
+              <span style="color:var(--ink-soft)"> · ${s.servicio} · ${s.quien}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="client-detail-tag" style="background:${tagBg};color:${tagColor}">${s.pago}</span>
+              <span style="font-weight:600;color:${isPend?'#B05A00':'var(--rose)'}">${fmt(s.precio)}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`).join(''):'<div class="empty"><div class="empty-icon">🌸</div><p>Sin servicios este mes</p></div>';
 
   // Render pendientes (all-time, filtered by worker if not admin)
@@ -1406,6 +1439,15 @@ function renderGraficos(){
   const tr=allData.filter(s=>s.pago==='Transferencia').length;
   if(chP){chP.destroy();chP=null;}
   chP=new Chart(document.getElementById('ch-pago'),{type:'doughnut',data:{labels:['Efectivo','Transferencia'],datasets:[{data:[ef,tr],backgroundColor:['rgba(200,80,111,0.85)','rgba(123,107,168,0.85)'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11,family:'DM Sans'},boxWidth:10,padding:10}}},cutout:'65%'}});
+}
+
+// ── CLIENT DETAIL TOGGLE ──────────────────────────────────────────
+function toggleClientDetail(i){
+  const row=document.getElementById('crow-'+i);
+  const det=document.getElementById('cdet-'+i);
+  const opening=!det.classList.contains('open');
+  det.classList.toggle('open',opening);
+  row.classList.toggle('expanded',opening);
 }
 
 // ── MODAL HELPERS ─────────────────────────────────────────────────
