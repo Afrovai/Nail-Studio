@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nail Studio</title>
+<meta name="description" content="Gestión de servicios y contabilidad para Nail Studio">
+<meta name="theme-color" content="#C8506F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Nail Studio">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23C8506F'/%3E%3Ctext y='.9em' font-size='72' x='12'%3E%F0%9F%92%85%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --rose:#C8506F;--rose-deep:#9E3352;--rose-pale:#F9EEF2;
+  --plum:#7B6BA8;--plum-pale:#F0EEF8;
+  --ink:#1C1420;--ink-soft:#8A7D92;
+  --cream:#FDF8F5;--white:#FFFFFF;
+  --border:#EDE5EA;--border-soft:#F5EFF2;
+  --success:#2D7A5A;--danger:#B03A2E;
+  --r8:8px;--r12:12px;--r16:16px;--r20:20px;--r24:24px;
+  --shadow-xs:0 1px 3px rgba(28,20,32,0.06);
+  --shadow-sm:0 2px 8px rgba(28,20,32,0.08);
+  --shadow-md:0 8px 24px rgba(28,20,32,0.10);
+}
+html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;overflow-x:hidden}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* LOGIN */
+#screen-login{align-items:center;justify-content:center;padding:24px;background:var(--cream)}
+#screen-login::before{content:'';position:fixed;top:-100px;right:-80px;width:320px;height:320px;background:radial-gradient(circle,rgba(200,80,111,0.12),transparent 70%);pointer-events:none}
+#screen-login::after{content:'';position:fixed;bottom:-80px;left:-60px;width:260px;height:260px;background:radial-gradient(circle,rgba(123,107,168,0.10),transparent 70%);pointer-events:none}
+.login-wrap{width:100%;max-width:360px;z-index:1}
+.login-brand{text-align:center;margin-bottom:32px}
+.login-brand-icon{font-size:44px;line-height:1;margin-bottom:10px;display:block}
+.login-brand h1{font-family:'Playfair Display',serif;font-size:30px;font-weight:500;color:var(--ink);letter-spacing:-0.5px}
+.login-brand p{font-size:13px;color:var(--ink-soft);margin-top:4px;font-weight:300}
+.login-card{background:var(--white);border-radius:var(--r24);padding:28px;box-shadow:var(--shadow-md)}
+.login-card h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;margin-bottom:22px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px}
+.field select,.field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none}
+.field select:focus,.field input:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(200,80,111,0.10)}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:6px 0 4px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.15s}
+.pin-dot.filled{background:var(--rose);border-color:var(--rose)}
+.pin-input-hidden{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.pin-tap-area{cursor:pointer;padding:10px 0;text-align:center;font-size:13px;color:var(--ink-soft)}
+.btn-main{width:100%;padding:14px;background:var(--rose);color:#fff;border:none;border-radius:var(--r12);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;margin-top:6px}
+.btn-main:active{transform:scale(0.98);background:var(--rose-deep)}
+.btn-main:disabled{opacity:0.5;cursor:not-allowed}
+.err-msg{background:#FEF0EE;border:1px solid #F5C4BE;border-radius:var(--r8);padding:10px 12px;color:var(--danger);font-size:13px;margin-bottom:14px;display:none}
+
+/* APP */
+#screen-app{background:var(--cream)}
+.app-wrap{max-width:430px;margin:0 auto;padding-bottom:76px}
+.app-header{background:var(--white);border-bottom:1px solid var(--border-soft);padding:16px 20px 12px;position:sticky;top:0;z-index:50}
+.app-header-inner{display:flex;justify-content:space-between;align-items:center}
+.app-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;letter-spacing:-0.3px}
+.app-sub{font-size:12px;color:var(--ink-soft);margin-top:1px;font-weight:300}
+.user-chip{display:flex;align-items:center;gap:6px;background:var(--rose-pale);padding:6px 12px 6px 8px;border-radius:20px;cursor:pointer}
+.user-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.user-name{font-size:12px;font-weight:600;color:var(--rose-deep)}
+
+/* NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--white);border-top:1px solid var(--border-soft);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 4px 8px;border:none;background:none;cursor:pointer;color:var(--ink-soft);font-size:10px;font-family:'DM Sans',sans-serif;font-weight:500;gap:3px;transition:color 0.15s;letter-spacing:0.3px}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn.active{color:var(--rose)}
+.nav-btn.active svg{stroke-width:2.2}
+
+/* SECTIONS */
+.sec{display:none;padding:20px 16px}
+.sec.active{display:block}
+.sec-head{margin-bottom:18px}
+.sec-head h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;letter-spacing:-0.3px}
+.sec-head p{font-size:13px;color:var(--ink-soft);margin-top:3px;font-weight:300}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--r20);border:1px solid var(--border-soft);padding:20px;margin-bottom:14px;box-shadow:var(--shadow-xs)}
+.card-label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+
+/* FORM */
+.f-row{margin-bottom:14px}
+.f-row label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px}
+.f-row input,.f-row select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;transition:all 0.2s;-webkit-appearance:none}
+.f-row input:focus,.f-row select:focus{border-color:var(--rose);background:var(--white);box-shadow:0 0 0 3px rgba(200,80,111,0.08)}
+.f-hint{font-size:11px;color:var(--ink-soft);margin-top:5px;font-weight:300}
+.f-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* SERVICE PICKER */
+.svc-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.svc-pick-btn{padding:16px 12px;border:1.5px solid var(--border);border-radius:var(--r16);background:var(--cream);cursor:pointer;text-align:center;transition:all 0.18s;font-family:'DM Sans',sans-serif}
+.svc-pick-btn .svc-pick-icon{font-size:24px;display:block;margin-bottom:6px}
+.svc-pick-btn .svc-pick-name{font-size:14px;font-weight:600;color:var(--ink);display:block}
+.svc-pick-btn .svc-pick-price{font-size:12px;color:var(--ink-soft);display:block;margin-top:2px;font-weight:300}
+.svc-pick-btn.active{border-color:var(--rose);background:var(--rose-pale)}
+.svc-pick-btn.active .svc-pick-name{color:var(--rose)}
+.svc-pick-btn.active .svc-pick-price{color:var(--rose-deep)}
+
+/* SEGMENTED */
+.seg{display:flex;background:var(--border-soft);border-radius:var(--r12);padding:3px;margin-bottom:14px}
+.seg-btn{flex:1;padding:9px;border:none;background:transparent;border-radius:var(--r8);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--ink-soft);cursor:pointer;transition:all 0.2s}
+.seg-btn.active{background:var(--white);color:var(--rose);box-shadow:var(--shadow-xs);font-weight:600}
+
+/* METRICS */
+.metrics-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--white);border:1px solid var(--border-soft);border-radius:var(--r16);padding:16px;box-shadow:var(--shadow-xs)}
+.metric-lbl{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px}
+.metric-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:500}
+.metric-val.rose{color:var(--rose)}
+.metric-val.plum{color:var(--plum)}
+.metric-val.green{color:var(--success)}
+
+/* SERVICE LIST */
+.svc-item{display:flex;justify-content:space-between;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--border-soft)}
+.svc-item:last-child{border-bottom:none}
+.svc-name{font-size:14px;font-weight:600}
+.svc-meta{font-size:12px;color:var(--ink-soft);margin-top:2px;font-weight:300}
+.svc-right{text-align:right;flex-shrink:0;margin-left:10px}
+.svc-amount{font-size:15px;font-weight:600;color:var(--rose)}
+.svc-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;margin-top:4px;letter-spacing:0.3px}
+.badge-f{background:var(--rose-pale);color:var(--rose-deep)}
+.badge-i{background:var(--plum-pale);color:var(--plum)}
+.svc-actions{display:flex;gap:6px;margin-top:6px;justify-content:flex-end}
+.svc-action-btn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all 0.15s}
+.svc-edit-btn{background:#EEF2FB;color:#1A3B8A}
+.svc-del-btn{background:#FEF0EE;color:var(--danger)}
+
+/* WORKER PANEL - generic (used for each worker in resumen) */
+.worker-panel{border-radius:var(--r20);padding:20px;margin-bottom:14px}
+.worker-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.worker-panel-head strong{font-family:'Playfair Display',serif;font-size:17px;font-weight:500}
+.worker-tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.worker-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0}
+.worker-row span:first-child{font-weight:300;opacity:0.8}
+.worker-row span:last-child{font-weight:600}
+.worker-divider{height:1px;margin:10px 0;opacity:0.3}
+.worker-total{display:flex;justify-content:space-between;align-items:center}
+.worker-total span:first-child{font-size:14px;font-weight:600}
+.worker-total-val{font-family:'Playfair Display',serif;font-size:24px;font-weight:500}
+.adelanto-input-row{display:flex;gap:8px;margin-top:14px}
+.adelanto-input-row input{flex:1;padding:10px 12px;border:1.5px solid rgba(0,0,0,0.15);border-radius:var(--r8);font-size:14px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none}
+.btn-plum{padding:10px 16px;background:var(--plum);color:#fff;border:none;border-radius:var(--r8);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.adelanto-list{margin-top:10px}
+.adelanto-item{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 0;border-top:1px solid rgba(0,0,0,0.08)}
+.adelanto-item span:first-child{font-weight:300;opacity:0.8}
+.adelanto-item .adelanto-amount{color:var(--danger);font-weight:600}
+.adelanto-item .adelanto-edit-btn{padding:3px 8px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.12);border-radius:5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;color:var(--ink)}
+
+/* COD */
+.cod-btn{width:100%;padding:16px;background:var(--ink);color:#fff;border:none;border-radius:var(--r16);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.cod-btn svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* MODALS shared */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(28,20,32,0.55);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--white);border-radius:var(--r24) var(--r24) 0 0;padding:28px 24px 40px;width:100%;max-width:430px;animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);max-height:90vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.btn-save{flex:1;padding:13px;background:var(--rose);color:#fff;border:none;border-radius:var(--r12);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer}
+.btn-cancel{flex:1;padding:13px;background:var(--border-soft);color:var(--ink);border:none;border-radius:var(--r12);font-size:15px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* COD specific */
+.cod-date{font-size:13px;color:var(--ink-soft);margin-bottom:24px;font-weight:300}
+.cod-boxes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.cod-box{border-radius:var(--r16);padding:18px}
+.cod-box.cash{background:#F0FAF4;border:1px solid #B6DFC8}
+.cod-box.transfer{background:#EEF2FB;border:1px solid #B8C8F0}
+.cod-box-icon{font-size:22px;margin-bottom:8px}
+.cod-box-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px}
+.cod-box.cash .cod-box-label{color:#1A6B3C}
+.cod-box.transfer .cod-box-label{color:#1A3B8A}
+.cod-box-amount{font-family:'Playfair Display',serif;font-size:22px;font-weight:500}
+.cod-box.cash .cod-box-amount{color:#1A6B3C}
+.cod-box.transfer .cod-box-amount{color:#1A3B8A}
+.cod-box-sub{font-size:11px;margin-top:3px;font-weight:300;color:var(--ink-soft)}
+.cod-total-row{background:var(--ink);color:#fff;border-radius:var(--r12);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.cod-total-row span:first-child{font-size:13px;opacity:0.7}
+.cod-total-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:500}
+.cod-svc-head{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;color:var(--ink-soft);margin-bottom:10px}
+.cod-svc-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border-soft)}
+.cod-svc-row:last-child{border-bottom:none}
+.cod-close-btn{width:100%;padding:15px;background:var(--rose);color:#fff;border:none;border-radius:var(--r12);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:20px}
+
+/* WORKER CARD in ajustes */
+.worker-card{background:var(--white);border:1px solid var(--border-soft);border-radius:var(--r16);padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.worker-card-left{display:flex;align-items:center;gap:12px}
+.worker-card-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.worker-card-name{font-size:15px;font-weight:600}
+.worker-card-pct{font-size:12px;color:var(--ink-soft);font-weight:300;margin-top:1px}
+.worker-card-actions{display:flex;gap:6px}
+.btn-ghost{padding:8px 14px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r8);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--ink);cursor:pointer}
+.btn-icon{padding:8px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r8);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn-icon svg{width:16px;height:16px;stroke:var(--ink-soft);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-add-worker{width:100%;padding:14px;background:var(--rose-pale);color:var(--rose);border:1.5px dashed var(--rose-mid,#E8A0B4);border-radius:var(--r16);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.btn-danger-outline{padding:8px 14px;background:transparent;border:1.5px solid #F5C4BE;border-radius:var(--r8);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--danger);cursor:pointer}
+
+/* PENDING */
+.pending-panel{background:linear-gradient(135deg,#FFFBF0,#FFF3D8);border:1px solid #F5D99A;border-radius:var(--r20);padding:20px;margin-bottom:14px}
+.pending-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pending-panel-head strong{font-family:'Playfair Display',serif;font-size:17px;font-weight:500;color:#7A4F00}
+.pending-tag{font-size:11px;background:rgba(186,117,0,0.15);color:#7A4F00;padding:3px 10px;border-radius:20px;font-weight:600}
+.pending-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(186,117,0,0.15)}
+.pending-item:last-child{border-bottom:none}
+.pending-item-name{font-size:14px;font-weight:600;color:var(--ink)}
+.pending-item-meta{font-size:12px;color:#8A6200;margin-top:2px;font-weight:300}
+.pending-item-amount{font-size:15px;font-weight:700;color:#B05A00;text-align:right}
+.pending-item-date{font-size:11px;color:#8A6200;margin-top:2px}
+.pending-total-row{display:flex;justify-content:space-between;align-items:center;padding-top:12px;margin-top:4px;border-top:1px solid rgba(186,117,0,0.2)}
+.pending-total-row span:first-child{font-size:14px;font-weight:600;color:#7A4F00}
+.pending-total-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:#B05A00}
+.badge-pending{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;background:#FFF0C8;color:#8A5C00;letter-spacing:0.3px}
+.svc-item.is-pending{background:linear-gradient(90deg,#FFFBF2,transparent);border-left:3px solid #F0C050;padding-left:10px;margin-left:-13px}
+.month-sel{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);outline:none;margin-bottom:16px;-webkit-appearance:none;box-shadow:var(--shadow-xs)}
+.chart-wrap{position:relative;width:100%;height:220px;margin-top:4px}
+.chart-legend{display:flex;gap:16px;font-size:12px;font-weight:500;margin-bottom:12px;flex-wrap:wrap}
+.legend-dot{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle}
+.sett-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border-soft)}
+.sett-row:last-child{border-bottom:none}
+.sett-lbl{font-size:14px;font-weight:500}
+.sett-val{font-size:13px;color:var(--ink-soft);font-weight:300}
+.profile-header{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--white);border-radius:var(--r20);margin-bottom:14px;border:1px solid var(--border-soft)}
+.profile-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700}
+.profile-avatar.f{background:var(--rose-pale);color:var(--rose)}
+.profile-avatar.w{background:var(--plum-pale);color:var(--plum)}
+.profile-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:500}
+.profile-role{font-size:12px;color:var(--ink-soft);font-weight:300;margin-top:2px}
+.sync-bar{background:#FFFBF0;border:1px solid #F5E4A0;border-radius:var(--r8);padding:10px 14px;font-size:12px;color:#7A5E00;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sync-bar-btn{font-size:12px;padding:5px 10px;background:#F5E4A0;border:none;border-radius:6px;cursor:pointer;font-weight:600;color:#7A5E00;font-family:'DM Sans',sans-serif}
+/* PENDIENTES */
+.pendientes-panel{background:linear-gradient(135deg,#FFF8EE,#FFF0D8);border:1px solid #F5D99A;border-radius:var(--r20);padding:20px;margin-bottom:14px}
+.pendientes-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pendientes-head strong{font-family:'Playfair Display',serif;font-size:17px;font-weight:500;color:#7A5000}
+.pendientes-tag{font-size:11px;background:rgba(122,80,0,0.12);color:#7A5000;padding:3px 10px;border-radius:20px;font-weight:600}
+.pendiente-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(122,80,0,0.12)}
+.pendiente-item:last-child{border-bottom:none}
+.pendiente-name{font-size:14px;font-weight:600;color:#1C1420}
+.pendiente-meta{font-size:12px;color:#8A6200;margin-top:2px;font-weight:300}
+.pendiente-amount{font-size:15px;font-weight:700;color:#B05A00}
+.badge-pending{background:#FFF0D8;color:#8A4800;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;display:inline-block;margin-top:3px}
+.pendientes-total{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(122,80,0,0.2);margin-top:10px;padding-top:10px}
+.pendientes-total span:first-child{font-size:14px;font-weight:600;color:#7A5000}
+.pendientes-total-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:#B05A00}
+.empty{text-align:center;padding:32px 16px}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty p{font-size:14px;color:var(--ink-soft);font-weight:300}
+.spinner{text-align:center;padding:32px;color:var(--ink-soft);font-size:13px;font-weight:300}
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--danger)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <span class="login-brand-icon">💅</span>
+      <h1>Nail Studio</h1>
+      <p>Gestión de servicios y contabilidad</p>
+    </div>
+    <div class="login-card">
+      <h2>Bienvenida</h2>
+      <div class="field">
+        <label>¿Quién eres?</label>
+        <select id="login-user" onchange="onUserSelect()">
+          <option value="">Selecciona...</option>
+          <option value="fernanda">💗 Fernanda (Admin)</option>
+        </select>
+      </div>
+      <div class="field" id="pin-field" style="display:none">
+        <label>PIN</label>
+        <div class="pin-dots" id="pin-dots">
+          <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+          <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+        </div>
+        <input type="password" id="pin-hidden" inputmode="numeric" maxlength="4" class="pin-input-hidden" autocomplete="off">
+        <div class="pin-tap-area" onclick="document.getElementById('pin-hidden').focus()">Toca aquí para ingresar PIN</div>
+      </div>
+      <div class="err-msg" id="login-err"></div>
+      <button class="btn-main" id="login-btn" onclick="doLogin()" disabled>Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app" class="screen">
+  <div class="app-wrap">
+    <div class="app-header">
+      <div class="app-header-inner">
+        <div>
+          <div class="app-title">Nail Studio</div>
+          <div class="app-sub" id="hdr-date"></div>
+        </div>
+        <div class="user-chip" onclick="showSec('ajustes')">
+          <div class="user-avatar" id="hdr-avatar"></div>
+          <span class="user-name" id="hdr-name"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NUEVO -->
+    <div class="sec active" id="sec-nuevo">
+      <div id="sync-bar" style="display:none" class="sync-bar">
+        <span>⚠️ <span id="pending-n">0</span> sin sincronizar</span>
+        <button class="sync-bar-btn" onclick="syncPending()">Sincronizar</button>
+      </div>
+      <div class="sec-head"><h2>Nuevo servicio</h2><p>Registra el servicio realizado</p></div>
+      <div class="card">
+        <div class="f-2col">
+          <div class="f-row"><label>Nombre</label><input id="f-nombre" type="text" placeholder="María" autocomplete="off"></div>
+          <div class="f-row"><label>Apellido</label><input id="f-apellido" type="text" placeholder="González" autocomplete="off"></div>
+        </div>
+        <div class="f-row"><label>Fecha</label><input id="f-fecha" type="date"></div>
+        <div class="f-row">
+          <label>Servicio</label>
+          <div class="svc-picker">
+            <button class="svc-pick-btn active" id="spk-mani" onclick="selectServicio('Manicure')">
+              <span class="svc-pick-icon">💅</span>
+              <span class="svc-pick-name">Manicure</span>
+              <span class="svc-pick-price">desde $30.000</span>
+            </button>
+            <button class="svc-pick-btn" id="spk-pedi" onclick="selectServicio('Pedicure')">
+              <span class="svc-pick-icon">🦶</span>
+              <span class="svc-pick-name">Pedicure</span>
+              <span class="svc-pick-price">desde $30.000</span>
+            </button>
+          </div>
+        </div>
+        <div class="f-row">
+          <label>Precio cobrado ($)</label>
+          <input id="f-precio" type="number" placeholder="30000" min="0" inputmode="numeric">
+          <div class="f-hint">Base $30.000 — ajusta si cobras más</div>
+        </div>
+        <div class="f-row" id="quien-row">
+          <label>Realizado por</label>
+          <select id="f-quien" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;-webkit-appearance:none"></select>
+        </div>
+        <div class="f-row">
+          <label>Forma de pago</label>
+          <div class="seg">
+            <button class="seg-btn active" id="seg-ef" onclick="selectPago('Efectivo')">💵 Efectivo</button>
+            <button class="seg-btn" id="seg-tr" onclick="selectPago('Transferencia')">📲 Transfer.</button>
+            <button class="seg-btn" id="seg-pd" onclick="selectPago('Pendiente')">⏳ Pendiente</button>
+          </div>
+        </div>
+        <button class="btn-main" onclick="registrar()">Registrar servicio</button>
+      </div>
+      <div id="cod-trigger">
+        <button class="cod-btn" onclick="openCOD()">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Finalizar el día
+        </button>
+      </div>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="sec" id="sec-resumen">
+      <div class="sec-head"><h2>Resumen</h2><p>Contabilidad por mes</p></div>
+      <select class="month-sel" id="res-mes" onchange="renderResumen()"></select>
+      <div class="metrics-row" id="res-metrics"><div class="spinner">Cargando...</div></div>
+      <div id="workers-panels"></div>
+      <!-- PENDIENTES PANEL -->
+      <div id="pendientes-panel"></div>
+      <div class="card">
+        <div class="card-label">Por cliente</div>
+        <div id="res-clientes"><div class="spinner">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- BÚSQUEDA DE CLIENTES -->
+    <div class="sec" id="sec-buscar">
+      <div class="sec-head"><h2>Clientes</h2><p>Busca el historial de una clienta</p></div>
+      <div style="position:relative;margin-bottom:14px">
+        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--ink-soft);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search-input" type="text" placeholder="Nombre o apellido..." autocomplete="off"
+          style="width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);outline:none;box-shadow:var(--shadow-xs)"
+          oninput="renderSearch()">
+      </div>
+      <div id="search-suggestions" style="margin-bottom:14px"></div>
+      <div id="search-results"></div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="sec" id="sec-graficos">
+      <div class="sec-head"><h2>Estadísticas</h2><p>Evolución del negocio</p></div>
+      <div class="card">
+        <div class="card-label">Ingresos por mes</div>
+        <div class="chart-legend" id="chart-legend"></div>
+        <div class="chart-wrap"><canvas id="ch-ingresos" role="img" aria-label="Ingresos mensuales">Sin datos.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Manicure vs Pedicure</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ch-tipos">Sin datos.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Top 10 clientas</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="ch-topclientes">Sin datos.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Forma de pago</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ch-pago">Sin datos.</canvas></div>
+      </div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="sec" id="sec-historial">
+      <div class="sec-head"><h2>Historial</h2><p>Servicios registrados</p></div>
+      <div class="seg" style="margin-bottom:14px">
+        <button class="seg-btn active" id="htab-dia" onclick="setHistPeriod('dia')">Día</button>
+        <button class="seg-btn" id="htab-semana" onclick="setHistPeriod('semana')">Semana</button>
+        <button class="seg-btn" id="htab-mes" onclick="setHistPeriod('mes')">Mes</button>
+        <button class="seg-btn" id="htab-ano" onclick="setHistPeriod('ano')">Año</button>
+      </div>
+      <div id="hist-day-pick" style="margin-bottom:14px">
+        <input type="date" id="hist-day" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);outline:none;box-shadow:var(--shadow-xs)" onchange="renderHistorial()">
+      </div>
+      <select class="month-sel" id="hist-mes" onchange="renderHistorial()" style="display:none"></select>
+      <select class="month-sel" id="hist-ano" onchange="renderHistorial()" style="display:none"></select>
+      <!-- Filtro por persona — solo visible para Fernanda -->
+      <div id="hist-quien-filter" style="display:none;margin-bottom:14px">
+        <select id="hist-quien" onchange="renderHistorial()" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:14px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);outline:none;-webkit-appearance:none;box-shadow:var(--shadow-xs)">
+          <option value="todas">👥 Todas las trabajadoras</option>
+          <option value="Fernanda">💗 Fernanda</option>
+        </select>
+      </div>
+      <div class="metrics-row" id="hist-metrics" style="margin-bottom:14px"></div>
+      <div class="card">
+        <div class="card-label" id="hist-card-label">Servicios</div>
+        <div id="hist-list"><div class="spinner">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- AJUSTES -->
+    <div class="sec" id="sec-ajustes">
+      <div class="sec-head"><h2>Ajustes</h2></div>
+      <div class="profile-header">
+        <div class="profile-avatar" id="sett-avatar"></div>
+        <div><div class="profile-name" id="sett-name"></div><div class="profile-role" id="sett-rol"></div></div>
+      </div>
+      <!-- Solo Fernanda ve esto -->
+      <div id="admin-panel" style="display:none">
+        <div class="card">
+          <div class="card-label">Cuenta</div>
+          <div class="sett-row"><span class="sett-lbl">Cambiar mi PIN</span><button class="btn-ghost" onclick="changeFernandaPin()">Cambiar</button></div>
+          <div class="sett-row"><span class="sett-lbl">Sincronizar datos</span><button class="btn-ghost" onclick="syncAll()">Sync</button></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Trabajadoras</div>
+          <div id="workers-list"></div>
+          <button class="btn-add-worker" onclick="openAddWorker()">
+            <svg style="width:18px;height:18px;stroke:var(--rose);fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar trabajadora
+          </button>
+        </div>
+      </div>
+      <!-- Trabajadoras solo ven info básica -->
+      <div id="worker-panel" style="display:none">
+        <div class="card">
+          <div class="card-label">Cuenta</div>
+          <div class="sett-row"><span class="sett-lbl">Rol</span><span class="sett-val">Colaboradora</span></div>
+        </div>
+      </div>
+      <button class="btn-danger-outline" onclick="logout()" style="width:100%;padding:13px;margin-top:6px;border-radius:var(--r12)">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-nuevo" onclick="showSec('nuevo',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Nuevo
+    </button>
+    <button class="nav-btn" id="nav-resumen" onclick="showSec('resumen',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Resumen
+    </button>
+    <button class="nav-btn" id="nav-buscar" onclick="showSec('buscar',this)">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Clientes
+    </button>
+    <button class="nav-btn" id="nav-graficos" onclick="showSec('graficos',this)">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/></svg>Gráficos
+    </button>
+    <button class="nav-btn" id="nav-historial" onclick="showSec('historial',this)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>Historial
+    </button>
+    <button class="nav-btn" id="nav-ajustes" onclick="showSec('ajustes',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Ajustes
+    </button>
+  </nav>
+</div>
+
+<!-- CIERRE DEL DÍA -->
+<div class="modal-overlay" id="cod-modal" onclick="closeModalOutside(event,'cod-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Cierre del día</div>
+    <div class="cod-date" id="cod-date"></div>
+    <div class="cod-boxes" id="cod-boxes"></div>
+    <div class="cod-total-row"><span>Total del día</span><span class="cod-total-val" id="cod-total"></span></div>
+    <div class="cod-svc-head">Detalle</div>
+    <div id="cod-detail"></div>
+    <button class="cod-close-btn" onclick="closeModal('cod-modal')">Cerrar</button>
+  </div>
+</div>
+
+<!-- EDIT SERVICE MODAL -->
+<div class="modal-overlay" id="edit-modal" onclick="closeModalOutside(event,'edit-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar servicio</div>
+    <input type="hidden" id="edit-id">
+    <div class="f-2col">
+      <div class="f-row"><label>Nombre</label><input id="e-nombre" type="text" autocomplete="off"></div>
+      <div class="f-row"><label>Apellido</label><input id="e-apellido" type="text" autocomplete="off"></div>
+    </div>
+    <div class="f-row"><label>Fecha</label><input id="e-fecha" type="date"></div>
+    <div class="f-row">
+      <label>Servicio</label>
+      <div class="svc-picker">
+        <button class="svc-pick-btn" id="espk-mani" onclick="editSelectServicio('Manicure')">
+          <span class="svc-pick-icon">💅</span><span class="svc-pick-name">Manicure</span>
+        </button>
+        <button class="svc-pick-btn" id="espk-pedi" onclick="editSelectServicio('Pedicure')">
+          <span class="svc-pick-icon">🦶</span><span class="svc-pick-name">Pedicure</span>
+        </button>
+      </div>
+    </div>
+    <div class="f-row"><label>Precio ($)</label><input id="e-precio" type="number" min="0" inputmode="numeric"></div>
+    <div class="f-row">
+      <label>Realizado por</label>
+      <select id="e-quien" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;-webkit-appearance:none"></select>
+    </div>
+    <div class="f-row">
+      <label>Forma de pago</label>
+      <div class="seg">
+        <button class="seg-btn" id="eseg-ef" onclick="editSelectPago('Efectivo')">💵 Efectivo</button>
+        <button class="seg-btn" id="eseg-tr" onclick="editSelectPago('Transferencia')">📲 Transfer.</button>
+        <button class="seg-btn" id="eseg-pd" onclick="editSelectPago('Pendiente')">⏳ Pendiente</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('edit-modal')">Cancelar</button>
+      <button class="btn-save" onclick="saveEdit()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ADELANTO MODAL -->
+<div class="modal-overlay" id="adelanto-modal" onclick="closeModalOutside(event,'adelanto-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar adelanto</div>
+    <input type="hidden" id="ad-edit-idx">
+    <input type="hidden" id="ad-edit-worker">
+    <div class="f-row"><label>Fecha</label><input id="ad-edit-fecha" type="date"></div>
+    <div class="f-row"><label>Monto ($)</label><input id="ad-edit-monto" type="number" min="0" inputmode="numeric" placeholder="Ej: 20000"></div>
+    <div class="f-row"><label>Razón</label><input id="ad-edit-razon" type="text" placeholder="Ej: Arriendo, mercado..." autocomplete="off"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="confirmDeleteAdelanto()" style="background:#FEF0EE;color:var(--danger);border:none">🗑 Eliminar</button>
+      <button class="btn-cancel" onclick="closeModal('adelanto-modal')">Cancelar</button>
+      <button class="btn-save" onclick="saveEditAdelanto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD WORKER MODAL -->
+<div class="modal-overlay" id="worker-modal" onclick="closeModalOutside(event,'worker-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="worker-modal-title">Nueva trabajadora</div>
+    <input type="hidden" id="wm-edit-id">
+    <div class="f-row"><label>Nombre</label><input id="wm-nombre" type="text" placeholder="Ej: Valentina" autocomplete="off"></div>
+    <div class="f-row">
+      <label>Porcentaje que se lleva (%)</label>
+      <input id="wm-pct" type="number" min="1" max="100" placeholder="Ej: 60" inputmode="numeric">
+      <div class="f-hint">Del total que ella genere, este % es para ella</div>
+    </div>
+    <div class="f-row">
+      <label>Color</label>
+      <div class="seg" id="wm-color-seg">
+        <button class="seg-btn active" id="wc-plum" onclick="selectWorkerColor('plum')" style="color:#7B6BA8">● Ciruela</button>
+        <button class="seg-btn" id="wc-teal" onclick="selectWorkerColor('teal')" style="color:#2D7A6A">● Teal</button>
+        <button class="seg-btn" id="wc-amber" onclick="selectWorkerColor('amber')" style="color:#8A5C00">● Ámbar</button>
+      </div>
+    </div>
+    <div class="f-row">
+      <label>PIN de acceso (4 dígitos)</label>
+      <input id="wm-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+    </div>
+    <div class="f-row">
+      <label>Confirmar PIN</label>
+      <input id="wm-pin2" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('worker-modal')">Cancelar</button>
+      <button class="btn-save" onclick="saveWorker()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbywHVvLCJQYCpcVjrw8mrfnXWQlo4H79bPbhYbIviAz8toTqeeiwtpuX_z35tRkMtfl/exec';
+
+// ── STATE ──────────────────────────────────────────────────────────
+// workers: [{id, nombre, pct, color, pin}]  (Ivette is a worker too, with pct:60)
+let workers = [];
+let PINS = { fernanda: '1234' };
+let currentUser = null; // 'fernanda' or worker id
+let currentWorkerObj = null;
+
+let selectedServicio = 'Manicure';
+let selectedPago = 'Efectivo';
+let editServicioPick = 'Manicure';
+let editPagoPick = 'Efectivo';
+let selectedWorkerColor = 'plum';
+let allData = [];
+let allAdelantos = []; // [{id, workerId, fecha, monto}]
+let pinBuffer = '';
+let histPeriod = 'dia';
+let chI=null,chT=null,chP=null;
+
+const WORKER_COLORS = {
+  plum: { bg:'#F0EEF8', border:'#D8D2EE', text:'#534AB7', panelBg:'linear-gradient(135deg,#F0EEF8,#E8E4F4)', avatarBg:'var(--plum-pale)', avatarText:'var(--plum)' },
+  teal: { bg:'#EEF8F6', border:'#B6DFD8', text:'#1A5C52', panelBg:'linear-gradient(135deg,#EEF8F6,#D8F0EC)', avatarBg:'#D8F0EC', avatarText:'#1A5C52' },
+  amber:{ bg:'#FBF5E8', border:'#F0D9A0', text:'#7A5000', panelBg:'linear-gradient(135deg,#FBF5E8,#F5E8C4)', avatarBg:'#F5E8C4', avatarText:'#7A5000' }
+};
+
+// ── INIT ───────────────────────────────────────────────────────────
+function init(){
+  loadAll();
+  buildLoginOptions();
+  const saved = sessionStorage.getItem('ns_user');
+  if(saved){ currentUser=saved; resolveCurrentWorker(); startApp(); }
+  else showScreen('login');
+  document.getElementById('f-fecha').value = today();
+  document.getElementById('pin-hidden').addEventListener('input', onPinInput);
+  document.getElementById('pin-hidden').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+}
+
+const STORE_VERSION = 2; // bump this when default data changes
+
+function loadAll(){
+  try{
+    const d = JSON.parse(localStorage.getItem('ns_store')||'{}');
+    workers = d.workers || defaultWorkers();
+    PINS = d.pins || { fernanda:'1234' };
+    allData = d.services || [];
+    allAdelantos = d.adelantos || [];
+
+    // ── MIGRATIONS ──
+    let migrated = false;
+
+    // v2: rename Ivete → Ivette
+    workers.forEach(w => {
+      if(w.id === 'ivete' && w.nombre === 'Ivete'){
+        w.nombre = 'Ivette';
+        migrated = true;
+      }
+    });
+    // Also fix service records that say "Ivete"
+    allData.forEach(s => {
+      if(s.quien === 'Ivete'){ s.quien = 'Ivette'; migrated = true; }
+      if(s.registradoPor === 'Ivete'){ s.registradoPor = 'Ivette'; migrated = true; }
+    });
+
+    if(migrated) saveAll();
+
+  }catch(e){ workers=defaultWorkers(); PINS={fernanda:'1234'}; allData=[]; allAdelantos=[]; }
+}
+function saveAll(){
+  try{ localStorage.setItem('ns_store', JSON.stringify({workers,pins:PINS,services:allData,adelantos:allAdelantos})); }catch(e){}
+}
+function defaultWorkers(){
+  return [{ id:'ivete', nombre:'Ivette', pct:60, color:'plum', pin:'5678' }];
+}
+
+function resolveCurrentWorker(){
+  if(currentUser==='fernanda'){ currentWorkerObj=null; return; }
+  currentWorkerObj = workers.find(w=>w.id===currentUser) || null;
+}
+
+function buildLoginOptions(){
+  const sel = document.getElementById('login-user');
+  // Keep fernanda option, rebuild worker options
+  while(sel.options.length>2) sel.remove(2);
+  workers.forEach(w=>{
+    const opt = document.createElement('option');
+    opt.value = w.id; opt.textContent = '💜 '+w.nombre;
+    sel.appendChild(opt);
+  });
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+// ── LOGIN ──────────────────────────────────────────────────────────
+function onUserSelect(){
+  const u = document.getElementById('login-user').value;
+  pinBuffer=''; document.getElementById('pin-hidden').value=''; updatePinDots();
+  document.getElementById('pin-field').style.display = u?'block':'none';
+  document.getElementById('login-btn').disabled = true;
+  document.getElementById('login-err').style.display = 'none';
+  if(u) setTimeout(()=>document.getElementById('pin-hidden').focus(),100);
+}
+function onPinInput(e){
+  pinBuffer=e.target.value.replace(/\D/g,'').substring(0,4);
+  e.target.value=pinBuffer; updatePinDots();
+  document.getElementById('login-btn').disabled = pinBuffer.length<4;
+  if(pinBuffer.length===4) setTimeout(doLogin,150);
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pinBuffer.length);
+}
+function doLogin(){
+  const user = document.getElementById('login-user').value;
+  const err = document.getElementById('login-err');
+  if(!user){ err.textContent='Selecciona un usuario'; err.style.display='block'; return; }
+  const correctPin = user==='fernanda' ? PINS.fernanda : (workers.find(w=>w.id===user)||{}).pin;
+  if(!correctPin || pinBuffer!==correctPin){
+    err.textContent='PIN incorrecto'; err.style.display='block';
+    pinBuffer=''; document.getElementById('pin-hidden').value=''; updatePinDots();
+    document.getElementById('login-btn').disabled=true; return;
+  }
+  err.style.display='none';
+  currentUser=user; resolveCurrentWorker();
+  sessionStorage.setItem('ns_user',user);
+  startApp();
+}
+function logout(){
+  currentUser=null; currentWorkerObj=null; sessionStorage.removeItem('ns_user');
+  pinBuffer=''; document.getElementById('pin-hidden').value='';
+  document.getElementById('login-user').value='';
+  document.getElementById('pin-field').style.display='none';
+  document.getElementById('login-btn').disabled=true;
+  updatePinDots(); showScreen('login');
+}
+
+// ── START APP ──────────────────────────────────────────────────────
+function startApp(){
+  showScreen('app');
+  const isF = currentUser==='fernanda';
+  const name = isF ? 'Fernanda' : currentWorkerObj?.nombre || currentUser;
+  const initials = name.charAt(0).toUpperCase();
+
+  document.getElementById('hdr-avatar').textContent = initials;
+  document.getElementById('hdr-avatar').style.background = isF ? 'var(--rose)' : 'var(--plum)';
+  document.getElementById('hdr-name').textContent = name;
+  document.getElementById('hdr-date').textContent = fmtDateLong(today());
+
+  // Ajustes panels
+  document.getElementById('sett-avatar').textContent = initials;
+  document.getElementById('sett-avatar').className = 'profile-avatar ' + (isF ? 'f' : 'w');
+  document.getElementById('sett-name').textContent = name;
+  document.getElementById('sett-rol').textContent = isF ? 'Administradora' : 'Colaboradora';
+  document.getElementById('admin-panel').style.display = isF ? 'block' : 'none';
+  document.getElementById('worker-panel').style.display = isF ? 'none' : 'block';
+
+  // Nuevo: Fernanda chooses worker, trabajadoras only register for themselves
+  document.getElementById('quien-row').style.display = isF ? 'block' : 'none';
+
+  // COD only for Fernanda
+  document.getElementById('cod-trigger').style.display = isF ? 'block' : 'none';
+
+  // Hide Gráficos nav tab for workers
+  document.getElementById('nav-graficos').style.display = isF ? 'flex' : 'none';
+
+  // Historial worker filter — only for Fernanda
+  document.getElementById('hist-quien-filter').style.display = isF ? 'block' : 'none';
+  if(isF) rebuildHistQuienFilter();
+
+  rebuildQuienSelect();
+  rebuildEditQuienSelect();
+  renderWorkersList();
+  fetchData();
+}
+
+function rebuildHistQuienFilter(){
+  const sel = document.getElementById('hist-quien');
+  const cur = sel.value || 'todas';
+  sel.innerHTML = '<option value="todas">👥 Todas</option><option value="Fernanda">💗 Fernanda</option>';
+  workers.forEach(w=>{
+    const o = document.createElement('option');
+    o.value = w.nombre; o.textContent = '💜 ' + w.nombre;
+    sel.appendChild(o);
+  });
+  // Restore selection if still valid
+  if([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+}
+
+function rebuildQuienSelect(){
+  const sel = document.getElementById('f-quien');
+  sel.innerHTML = '';
+  if(currentUser==='fernanda'){
+    const optF = document.createElement('option'); optF.value='Fernanda'; optF.textContent='💗 Fernanda'; sel.appendChild(optF);
+    workers.forEach(w=>{ const o=document.createElement('option'); o.value=w.nombre; o.textContent='💜 '+w.nombre; sel.appendChild(o); });
+  } else {
+    const w = currentWorkerObj;
+    const o = document.createElement('option'); o.value=w.nombre; o.textContent=w.nombre; sel.appendChild(o);
+  }
+}
+function rebuildEditQuienSelect(){
+  const sel = document.getElementById('e-quien');
+  sel.innerHTML = '';
+  const optF = document.createElement('option'); optF.value='Fernanda'; optF.textContent='💗 Fernanda'; sel.appendChild(optF);
+  workers.forEach(w=>{ const o=document.createElement('option'); o.value=w.nombre; o.textContent='💜 '+w.nombre; sel.appendChild(o); });
+}
+
+// ── DATA ───────────────────────────────────────────────────────────
+async function fetchData(){
+  try{
+    const res = await fetch(SCRIPT_URL+'?action=getAll&t='+Date.now());
+    const json = await res.json();
+    allData = json.services||[];
+    allAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
+    saveAll();
+  }catch(e){ showToast('Sin conexión — datos locales',true); }
+  populateMonths(); renderResumen(); renderHistorial(); checkPending();
+}
+async function apiPost(payload){ const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)}); return await r.json(); }
+function getPending(){return JSON.parse(localStorage.getItem('ns_pending')||'[]');}
+function addPending(item){const q=getPending();q.push(item);localStorage.setItem('ns_pending',JSON.stringify(q));checkPending();}
+function checkPending(){const q=getPending();const b=document.getElementById('sync-bar');if(q.length){b.style.display='flex';document.getElementById('pending-n').textContent=q.length;}else b.style.display='none';}
+async function syncPending(){const q=getPending();if(!q.length)return;showToast('Sincronizando...');let ok=0;for(const item of q){try{await apiPost(item);ok++;}catch(e){}}if(ok===q.length){localStorage.setItem('ns_pending','[]');showToast('Sincronizado ✓');fetchData();}else showToast('Error: '+ok+'/'+q.length,true);checkPending();}
+async function syncAll(){await fetchData();showToast('Datos actualizados ✓');}
+
+// ── REGISTER ──────────────────────────────────────────────────────
+async function registrar(){
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const apellido=document.getElementById('f-apellido').value.trim();
+  const fecha=document.getElementById('f-fecha').value;
+  const precio=parseInt(document.getElementById('f-precio').value);
+  const quien = currentUser==='fernanda' ? document.getElementById('f-quien').value : (currentWorkerObj?.nombre||'');
+  if(!nombre||!apellido||!fecha||!precio||precio<=0){showToast('Completa todos los campos',true);return;}
+  const payload={action:'addService',nombre,apellido,fecha,servicio:selectedServicio,precio,quien,pago:selectedPago,registradoPor:currentUser==='fernanda'?'Fernanda':quien,timestamp:new Date().toISOString()};
+  allData.push({...payload,id:Date.now()});saveAll();
+  try{await apiPost(payload);showToast('✓ Guardado en Google Sheets');}
+  catch(e){addPending(payload);showToast('Guardado sin conexión');}
+  document.getElementById('f-nombre').value='';document.getElementById('f-apellido').value='';
+  populateMonths();renderResumen();renderHistorial();
+}
+
+// ── ADELANTOS ─────────────────────────────────────────────────────
+async function registrarAdelanto(workerId, mk){
+  const monto=parseInt(document.getElementById('ad-monto-'+workerId).value);
+  const razon=(document.getElementById('ad-razon-'+workerId)?.value||'').trim();
+  if(!monto||monto<=0){showToast('Ingresa un monto',true);return;}
+  if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
+  const fecha=mk+'-'+String(new Date().getDate()).padStart(2,'0');
+  const id=Date.now();
+  const payload={action:'addAdelanto',id,workerId,fecha,monto,razon,timestamp:new Date().toISOString()};
+  allAdelantos.push({id,workerId,fecha,monto,razon});saveAll();
+  try{await apiPost(payload);showToast('✓ Adelanto registrado');}
+  catch(e){addPending(payload);showToast('Adelanto guardado sin conexión');}
+  document.getElementById('ad-monto-'+workerId).value='';
+  if(document.getElementById('ad-razon-'+workerId)) document.getElementById('ad-razon-'+workerId).value='';
+  renderResumen();
+}
+
+function openEditAdelanto(idx, workerId){
+  const a = allAdelantos[idx];
+  if(!a) return;
+  document.getElementById('ad-edit-idx').value = idx;
+  document.getElementById('ad-edit-worker').value = workerId;
+  document.getElementById('ad-edit-fecha').value = normalizeDate(a.fecha);
+  document.getElementById('ad-edit-monto').value = a.monto;
+  document.getElementById('ad-edit-razon').value = a.razon||'';
+  openModal('adelanto-modal');
+}
+
+async function saveEditAdelanto(){
+  const idx = parseInt(document.getElementById('ad-edit-idx').value);
+  const workerId = document.getElementById('ad-edit-worker').value;
+  const fecha = document.getElementById('ad-edit-fecha').value;
+  const montoRaw = document.getElementById('ad-edit-monto').value;
+  const monto = parseInt(montoRaw);
+  const razon = document.getElementById('ad-edit-razon').value.trim();
+  if(!fecha){showToast('Ingresa una fecha',true);return;}
+  if(montoRaw===''||isNaN(monto)||monto<0){showToast('Ingresa un monto válido',true);return;}
+  if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
+  allAdelantos[idx] = {...allAdelantos[idx], fecha, monto, razon};
+  saveAll();
+  const payload={action:'editAdelanto',id:allAdelantos[idx].id,workerId,fecha,monto,razon};
+  try{await apiPost(payload);showToast('✓ Adelanto actualizado');}
+  catch(e){addPending(payload);showToast('Guardado sin conexión');}
+  closeModal('adelanto-modal');renderResumen();
+}
+
+async function confirmDeleteAdelanto(){
+  const idx = parseInt(document.getElementById('ad-edit-idx').value);
+  const a = allAdelantos[idx];
+  if(!a||!confirm('¿Eliminar este adelanto de '+fmt(a.monto)+'?'))return;
+  const payload={action:'deleteAdelanto',id:a.id};
+  allAdelantos.splice(idx,1);
+  saveAll();
+  try{await apiPost(payload);showToast('Adelanto eliminado');}
+  catch(e){addPending(payload);showToast('Eliminado localmente');}
+  closeModal('adelanto-modal');renderResumen();
+}
+
+// ── EDIT SERVICE (admin only) ─────────────────────────────────────
+function openEdit(id){
+  if(currentUser!=='fernanda'){showToast('Solo Fernanda puede editar servicios',true);return;}
+  const svc=allData.find(s=>String(s.id)===String(id));
+  if(!svc)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('e-nombre').value=svc.nombre;
+  document.getElementById('e-apellido').value=svc.apellido;
+  document.getElementById('e-fecha').value=normalizeDate(svc.fecha);
+  document.getElementById('e-precio').value=svc.precio;
+  document.getElementById('e-quien').value=svc.quien||'Fernanda';
+  editServicioPick=svc.servicio||'Manicure';
+  editPagoPick=svc.pago||'Efectivo';
+  document.getElementById('espk-mani').classList.toggle('active',editServicioPick==='Manicure');
+  document.getElementById('espk-pedi').classList.toggle('active',editServicioPick==='Pedicure');
+  document.getElementById('eseg-ef').classList.toggle('active',editPagoPick==='Efectivo');
+  document.getElementById('eseg-tr').classList.toggle('active',editPagoPick==='Transferencia');
+  openModal('edit-modal');
+}
+async function saveEdit(){
+  const id=document.getElementById('edit-id').value;
+  const nombre=document.getElementById('e-nombre').value.trim();
+  const apellido=document.getElementById('e-apellido').value.trim();
+  const fecha=document.getElementById('e-fecha').value;
+  const precio=parseInt(document.getElementById('e-precio').value);
+  const quien=document.getElementById('e-quien').value;
+  if(!nombre||!apellido||!fecha||!precio||precio<=0){showToast('Completa todos los campos',true);return;}
+  const idx=allData.findIndex(s=>String(s.id)===String(id));
+  if(idx===-1)return;
+  allData[idx]={...allData[idx],nombre,apellido,fecha,servicio:editServicioPick,precio,quien,pago:editPagoPick};
+  saveAll();
+  const payload={action:'editService',id,nombre,apellido,fecha,servicio:editServicioPick,precio,quien,pago:editPagoPick};
+  try{await apiPost(payload);showToast('✓ Servicio actualizado');}
+  catch(e){addPending(payload);showToast('Guardado sin conexión');}
+  closeModal('edit-modal');populateMonths();renderResumen();renderHistorial();
+}
+function confirmDelete(id){
+  if(currentUser!=='fernanda'){showToast('Solo Fernanda puede eliminar servicios',true);return;}
+  const svc=allData.find(s=>String(s.id)===String(id));
+  if(!svc||!confirm(`¿Eliminar servicio de ${svc.nombre} ${svc.apellido} — ${fmt(svc.precio)}?`))return;
+  allData=allData.filter(s=>String(s.id)!==String(id));saveAll();
+  apiPost({action:'deleteService',id}).catch(()=>addPending({action:'deleteService',id}));
+  showToast('Servicio eliminado');populateMonths();renderResumen();renderHistorial();
+}
+
+// ── WORKERS MANAGEMENT ────────────────────────────────────────────
+function renderWorkersList(){
+  const el = document.getElementById('workers-list');
+  if(!el) return;
+  el.innerHTML = workers.map((w,i)=>{
+    const c = WORKER_COLORS[w.color]||WORKER_COLORS.plum;
+    return `
+    <div class="worker-card">
+      <div class="worker-card-left">
+        <div class="worker-card-avatar" style="background:${c.avatarBg};color:${c.avatarText}">${w.nombre.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="worker-card-name">${w.nombre}</div>
+          <div class="worker-card-pct">${w.pct}% de sus servicios · PIN: ${'•'.repeat(4)}</div>
+        </div>
+      </div>
+      <div class="worker-card-actions">
+        <button class="btn-icon" onclick="openEditWorker('${w.id}')" title="Editar">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        ${workers.length>1?`<button class="btn-icon" onclick="confirmDeleteWorker('${w.id}')" title="Eliminar">
+          <svg viewBox="0 0 24 24" style="stroke:var(--danger)"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddWorker(){
+  document.getElementById('wm-edit-id').value = '';
+  document.getElementById('worker-modal-title').textContent = 'Nueva trabajadora';
+  document.getElementById('wm-nombre').value='';
+  document.getElementById('wm-pct').value='60';
+  document.getElementById('wm-pin').value='';
+  document.getElementById('wm-pin2').value='';
+  selectedWorkerColor='plum';
+  ['plum','teal','amber'].forEach(c=>document.getElementById('wc-'+c).classList.toggle('active',c==='plum'));
+  openModal('worker-modal');
+}
+
+function openEditWorker(id){
+  const w = workers.find(x=>x.id===id);
+  if(!w) return;
+  document.getElementById('wm-edit-id').value = id;
+  document.getElementById('worker-modal-title').textContent = 'Editar trabajadora';
+  document.getElementById('wm-nombre').value = w.nombre;
+  document.getElementById('wm-pct').value = w.pct;
+  document.getElementById('wm-pin').value = '';
+  document.getElementById('wm-pin2').value = '';
+  selectedWorkerColor = w.color||'plum';
+  ['plum','teal','amber'].forEach(c=>document.getElementById('wc-'+c).classList.toggle('active',c===selectedWorkerColor));
+  openModal('worker-modal');
+}
+
+function selectWorkerColor(c){
+  selectedWorkerColor=c;
+  ['plum','teal','amber'].forEach(x=>document.getElementById('wc-'+x).classList.toggle('active',x===c));
+}
+
+function saveWorker(){
+  const editId = document.getElementById('wm-edit-id').value;
+  const nombre = document.getElementById('wm-nombre').value.trim();
+  const pct = parseInt(document.getElementById('wm-pct').value);
+  const pin = document.getElementById('wm-pin').value;
+  const pin2 = document.getElementById('wm-pin2').value;
+
+  if(!nombre){showToast('Ingresa el nombre',true);return;}
+  if(!pct||pct<1||pct>100){showToast('Porcentaje debe ser entre 1 y 100',true);return;}
+
+  if(editId){
+    // Editing existing
+    const idx=workers.findIndex(w=>w.id===editId);
+    if(idx===-1) return;
+    workers[idx].nombre=nombre; workers[idx].pct=pct; workers[idx].color=selectedWorkerColor;
+    if(pin){
+      if(pin.length!==4||isNaN(pin)){showToast('PIN debe ser 4 dígitos',true);return;}
+      if(pin!==pin2){showToast('Los PINs no coinciden',true);return;}
+      workers[idx].pin=pin;
+    }
+    showToast('✓ Trabajadora actualizada');
+  } else {
+    // New worker
+    if(!pin||pin.length!==4||isNaN(pin)){showToast('PIN debe ser 4 dígitos',true);return;}
+    if(pin!==pin2){showToast('Los PINs no coinciden',true);return;}
+    const id = nombre.toLowerCase().replace(/\s+/g,'')+Date.now();
+    workers.push({id,nombre,pct,color:selectedWorkerColor,pin});
+    showToast('✓ '+nombre+' agregada');
+  }
+
+  saveAll();
+  buildLoginOptions();
+  rebuildQuienSelect();
+  rebuildEditQuienSelect();
+  rebuildHistQuienFilter();
+  renderWorkersList();
+  closeModal('worker-modal');
+}
+
+function confirmDeleteWorker(id){
+  const w=workers.find(x=>x.id===id);
+  if(!w||!confirm(`¿Eliminar a ${w.nombre}? Sus servicios registrados se conservarán.`))return;
+  workers=workers.filter(x=>x.id!==id);
+  saveAll();buildLoginOptions();rebuildQuienSelect();rebuildEditQuienSelect();renderWorkersList();
+  showToast(w.nombre+' eliminada');
+}
+
+// ── FORM HELPERS ──────────────────────────────────────────────────
+function selectServicio(v){
+  selectedServicio=v;
+  document.getElementById('spk-mani').classList.toggle('active',v==='Manicure');
+  document.getElementById('spk-pedi').classList.toggle('active',v==='Pedicure');
+  document.getElementById('f-precio').value=30000;
+}
+function selectPago(v){
+  selectedPago=v;
+  document.getElementById('seg-ef').classList.toggle('active',v==='Efectivo');
+  document.getElementById('seg-tr').classList.toggle('active',v==='Transferencia');
+  document.getElementById('seg-pd').classList.toggle('active',v==='Pendiente');
+}
+function editSelectServicio(v){editServicioPick=v;document.getElementById('espk-mani').classList.toggle('active',v==='Manicure');document.getElementById('espk-pedi').classList.toggle('active',v==='Pedicure');}
+function editSelectPago(v){
+  editPagoPick=v;
+  document.getElementById('eseg-ef').classList.toggle('active',v==='Efectivo');
+  document.getElementById('eseg-tr').classList.toggle('active',v==='Transferencia');
+  document.getElementById('eseg-pd').classList.toggle('active',v==='Pendiente');
+}
+function changeFernandaPin(){const p=prompt('Nuevo PIN para Fernanda (4 dígitos):');if(!p||p.length!==4||isNaN(p)){alert('El PIN debe ser 4 dígitos');return;}PINS.fernanda=p;saveAll();showToast('PIN actualizado ✓');}
+function changeWorkerPin(){
+  const p=prompt('Nuevo PIN (4 dígitos):');
+  if(!p||p.length!==4||isNaN(p)){alert('El PIN debe ser 4 dígitos');return;}
+  const idx=workers.findIndex(w=>w.id===currentUser);
+  if(idx===-1)return;
+  workers[idx].pin=p;saveAll();showToast('PIN actualizado ✓');
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────
+function today(){return new Date().toISOString().split('T')[0];}
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-CL');}
+function normalizeDate(d){
+  if(!d)return '';const s=String(d).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.substring(0,10);
+  const dt=new Date(s);if(isNaN(dt.getTime()))return '';
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function monthKey(d){const n=normalizeDate(d);return n?n.substring(0,7):'';}
+function monthLabel(k){if(!k||!k.includes('-'))return k||'';const[y,m]=k.split('-');const ns=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];const i=parseInt(m)-1;return(i>=0&&i<12?ns[i]:k)+' '+y;}
+function fmtDateShort(d){const n=normalizeDate(d);if(!n)return String(d);const[y,m,day]=n.split('-');const ns=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];return parseInt(day)+' '+ns[parseInt(m)-1];}
+function fmtDateLong(d){const n=normalizeDate(d);if(!n)return '';const dt=new Date(n+'T12:00:00');const days=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];return days[dt.getDay()]+', '+dt.getDate()+' de '+months[dt.getMonth()];}
+function weekStart(ds){const d=new Date(ds+'T12:00:00');const day=d.getDay();const diff=d.getDate()-(day===0?6:day-1);const m=new Date(d);m.setDate(diff);return m.toISOString().split('T')[0];}
+function weekEnd(ds){const ws=weekStart(ds);const d=new Date(ws+'T12:00:00');d.setDate(d.getDate()+6);return d.toISOString().split('T')[0];}
+function allMonths(){const keys=new Set(allData.map(s=>monthKey(s.fecha)).filter(Boolean));allAdelantos.forEach(a=>{const mk=monthKey(a.fecha);if(mk)keys.add(mk);});keys.add(today().substring(0,7));return[...keys].sort().reverse();}
+function allYears(){const years=new Set(allData.map(s=>normalizeDate(s.fecha).substring(0,4)).filter(Boolean));years.add(new Date().getFullYear().toString());return[...years].sort().reverse();}
+function populateYears(){const years=allYears();const sel=document.getElementById('hist-ano');const cur=sel.value||years[0];sel.innerHTML=years.map(y=>`<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');}
+function populateMonths(){const ms=allMonths();['res-mes','hist-mes'].forEach(id=>{const sel=document.getElementById(id);const cur=sel.value||ms[0];sel.innerHTML=ms.map(m=>`<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');});populateYears();}
+
+function workerForName(name){
+  return workers.find(w=>w.nombre===name)||null;
+}
+
+// ── PENDIENTES ─────────────────────────────────────────────────────
+function renderPendientes(filterWorkerName){
+  // All-time pending services (not filtered by month — show all unresolved)
+  let pendientes = allData.filter(s=>s.pago==='Pendiente');
+  if(filterWorkerName) pendientes = pendientes.filter(s=>s.quien===filterWorkerName);
+  const el = document.getElementById('pendientes-panel');
+  if(!el) return;
+  if(!pendientes.length){ el.innerHTML=''; return; }
+
+  const total = pendientes.reduce((t,s)=>t+parseInt(s.precio),0);
+  // Group by client
+  const byClient={};
+  pendientes.forEach(s=>{
+    const k=s.nombre+' '+s.apellido;
+    if(!byClient[k]) byClient[k]={name:k,items:[],total:0};
+    byClient[k].items.push(s); byClient[k].total+=parseInt(s.precio);
+  });
+
+  const isF = currentUser==='fernanda';
+  el.innerHTML=`
+    <div class="pendientes-panel">
+      <div class="pendientes-head">
+        <strong>⏳ Cobros pendientes</strong>
+        <span class="pendientes-tag">${pendientes.length} servicio${pendientes.length!==1?'s':''}</span>
+      </div>
+      ${Object.values(byClient).sort((a,b)=>b.total-a.total).map(c=>`
+        <div class="pendiente-item">
+          <div>
+            <div class="pendiente-name">${c.name}</div>
+            <div class="pendiente-meta">${c.items.map(s=>`${fmtDateShort(s.fecha)} · ${s.servicio} · ${s.quien}`).join(' — ')}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pendiente-amount">${fmt(c.total)}</div>
+            ${isF?`<div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end">${c.items.map(s=>`
+              <button class="svc-action-btn svc-edit-btn" style="font-size:10px;padding:3px 7px" onclick="openEdit('${s.id}')">Cobrar</button>`).join('')}</div>`:'<span class="badge-pending">Pendiente</span>'}
+          </div>
+        </div>`).join('')}
+      <div class="pendientes-total">
+        <span>Total pendiente</span>
+        <span class="pendientes-total-val">${fmt(total)}</span>
+      </div>
+    </div>`;
+}
+
+// ── RESUMEN ────────────────────────────────────────────────────────
+function getWorkerStats(workerId, workerName, mk){
+  const svcs = allData.filter(s=>monthKey(s.fecha)===mk && s.quien===workerName);
+  const paidSvcs = svcs.filter(s=>s.pago!=='Pendiente');
+  const pendingSvcs = svcs.filter(s=>s.pago==='Pendiente');
+  const cashSvcs = svcs.filter(s=>s.pago==='Efectivo');
+  const transfSvcs = svcs.filter(s=>s.pago==='Transferencia');
+  // total incluye pendientes para el cálculo de lo que le corresponde
+  const total = svcs.reduce((t,s)=>t+parseInt(s.precio),0);
+  const cashTotal = cashSvcs.reduce((t,s)=>t+parseInt(s.precio),0);
+  const transfTotal = transfSvcs.reduce((t,s)=>t+parseInt(s.precio),0);
+  const pendingTotal = pendingSvcs.reduce((t,s)=>t+parseInt(s.precio),0);
+  const w = workers.find(x=>x.id===workerId);
+  const pct = w ? w.pct/100 : 0.6;
+  const workerPart = total * pct;
+  const adv = allAdelantos.filter(a=>(a.workerId===workerId||(!a.workerId&&workerId==='ivete')) && monthKey(a.fecha)===mk).reduce((t,a)=>t+parseInt(a.monto),0);
+  return { total, cashTotal, transfTotal, pendingTotal, workerPart, fernandaPart: total*(1-pct), adv, saldo: workerPart-adv, svcs, paidSvcs, pendingSvcs, cashSvcs, transfSvcs, pct };
+}
+
+function renderResumen(){
+  const mk = document.getElementById('res-mes').value; if(!mk) return;
+  const isF = currentUser==='fernanda';
+
+  // Fernanda's own services (including pending)
+  const svcsFer = allData.filter(s=>monthKey(s.fecha)===mk && s.quien==='Fernanda');
+  const totalFer = svcsFer.reduce((t,s)=>t+parseInt(s.precio),0);
+
+  // Workers stats (now includes pending in total)
+  let totalWorkersFer = 0;
+  workers.forEach(w=>{ const st=getWorkerStats(w.id,w.nombre,mk); totalWorkersFer+=st.fernandaPart; });
+
+  const totalMes = allData.filter(s=>monthKey(s.fecha)===mk).reduce((t,s)=>t+parseInt(s.precio),0);
+  const totalPendiente = allData.filter(s=>monthKey(s.fecha)===mk && s.pago==='Pendiente').reduce((t,s)=>t+parseInt(s.precio),0);
+  const pendienteSvcs = allData.filter(s=>monthKey(s.fecha)===mk && s.pago==='Pendiente');
+
+  if(isF){
+    document.getElementById('res-metrics').innerHTML=`
+      <div class="metric"><div class="metric-lbl">Total mes</div><div class="metric-val">${fmt(totalMes)}</div></div>
+      <div class="metric"><div class="metric-lbl">Servicios</div><div class="metric-val">${allData.filter(s=>monthKey(s.fecha)===mk).length}</div></div>
+      <div class="metric"><div class="metric-lbl">Fernanda gana</div><div class="metric-val rose">${fmt(totalFer+totalWorkersFer)}</div></div>
+      <div class="metric"><div class="metric-lbl">A trabajadoras</div><div class="metric-val plum">${fmt(workers.reduce((t,w)=>t+getWorkerStats(w.id,w.nombre,mk).workerPart,0))}</div></div>
+      ${totalPendiente>0?`<div class="metric" style="border-color:#F5D99A;background:#FFFBF0;grid-column:1/-1"><div class="metric-lbl" style="color:#8A6200">⏳ De los cuales, pendiente de cobro</div><div class="metric-val" style="color:#B05A00;font-size:18px">${fmt(totalPendiente)}</div></div>`:''}`;
+
+    // Pending panel
+    if(pendienteSvcs.length>0){
+      document.getElementById('pendientes-panel').innerHTML=`
+      <div class="pending-panel">
+        <div class="pending-panel-head">
+          <strong>⏳ Pagos pendientes</strong>
+          <span class="pending-tag">${pendienteSvcs.length} cliente${pendienteSvcs.length!==1?'s':''}</span>
+        </div>
+        ${pendienteSvcs.sort((a,b)=>normalizeDate(a.fecha).localeCompare(normalizeDate(b.fecha))).map(s=>`
+          <div class="pending-item">
+            <div>
+              <div class="pending-item-name">${s.nombre} ${s.apellido}</div>
+              <div class="pending-item-meta">${s.servicio} · ${s.quien} · ${fmtDateShort(s.fecha)}</div>
+            </div>
+            <div>
+              <div class="pending-item-amount">${fmt(s.precio)}</div>
+              <div class="pending-item-date">⏳ Sin cobrar</div>
+            </div>
+          </div>`).join('')}
+        <div class="pending-total-row">
+          <span>Total pendiente</span>
+          <span class="pending-total-val">${fmt(totalPendiente)}</span>
+        </div>
+      </div>`;
+    } else {
+      document.getElementById('pendientes-panel').innerHTML='';
+    }
+
+    // Worker panels
+    document.getElementById('workers-panels').innerHTML = workers.map(w=>{
+      const st=getWorkerStats(w.id,w.nombre,mk);
+      const c=WORKER_COLORS[w.color]||WORKER_COLORS.plum;
+      const advIdx = allAdelantos.map((a,i)=>({...a,_i:i})).filter(a=>(a.workerId===w.id||(!a.workerId&&w.id==='ivete'))&&monthKey(a.fecha)===mk);
+      // Also get Fernanda's own breakdown for her panel
+      return `<div class="worker-panel" style="background:${c.panelBg};border:1px solid ${c.border}">
+        <div class="worker-panel-head">
+          <strong style="color:${c.text}">${w.nombre}</strong>
+          <span class="worker-tag" style="background:rgba(0,0,0,0.08);color:${c.text}">${w.pct}%</span>
+        </div>
+        <div class="worker-row"><span style="color:${c.text}">💵 Efectivo</span><span>${fmt(st.cashTotal)}</span></div>
+        <div class="worker-row"><span style="color:${c.text}">📲 Transferencia</span><span>${fmt(st.transfTotal)}</span></div>
+        ${st.pendingTotal>0?`<div class="worker-row"><span style="color:#8A6200">⏳ Pendiente</span><span style="color:#B05A00">${fmt(st.pendingTotal)}</span></div>`:''}
+        <div class="worker-divider" style="background:${c.border}"></div>
+        <div class="worker-row"><span style="color:${c.text}">Total generado</span><span style="font-weight:700">${fmt(st.total)}</span></div>
+        <div class="worker-row"><span style="color:${c.text}">Le corresponde (${w.pct}%)</span><span>${fmt(st.workerPart)}</span></div>
+        <div class="worker-row"><span style="color:${c.text}">Adelantos</span><span style="color:var(--danger)">-${fmt(st.adv)}</span></div>
+        <div class="worker-divider" style="background:${c.border}"></div>
+        <div class="worker-total">
+          <span style="color:${c.text}">Saldo a pagar</span>
+          <span class="worker-total-val" style="color:${st.saldo>=0?'var(--success)':'var(--danger)'}">${fmt(Math.abs(st.saldo))}${st.saldo<0?' ⚠️':''}</span>
+        </div>
+        <div style="margin-top:14px;margin-bottom:6px;font-size:11px;font-weight:600;color:${c.text};text-transform:uppercase;letter-spacing:0.7px">Registrar adelanto</div>
+        <div class="adelanto-input-row">
+          <input type="number" id="ad-monto-${w.id}" placeholder="Monto $" min="0" inputmode="numeric" style="border-color:${c.border}">
+          <input type="text" id="ad-razon-${w.id}" placeholder="Razón (ej: arriendo)" style="flex:1.5;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:13px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
+          <button class="btn-plum" style="background:${c.text}" onclick="registrarAdelanto('${w.id}','${mk}')">+</button>
+        </div>
+        <div class="adelanto-list">
+          ${advIdx.map(a=>`
+            <div class="adelanto-item">
+              <div>
+                <span>${fmtDateShort(a.fecha)}</span>
+                ${a.razon?`<span style="font-size:11px;color:#6B5E98;margin-left:6px;font-weight:300">· ${a.razon}</span>`:''}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="adelanto-amount">-${fmt(a.monto)}</span>
+                <button class="adelanto-edit-btn" onclick="openEditAdelanto(${a._i},'${w.id}')">Editar</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+
+    // Fernanda's own breakdown
+    const ferCash = allData.filter(s=>monthKey(s.fecha)===mk&&s.quien==='Fernanda'&&s.pago==='Efectivo').reduce((t,s)=>t+parseInt(s.precio),0);
+    const ferTransf = allData.filter(s=>monthKey(s.fecha)===mk&&s.quien==='Fernanda'&&s.pago==='Transferencia').reduce((t,s)=>t+parseInt(s.precio),0);
+    const ferPending = allData.filter(s=>monthKey(s.fecha)===mk&&s.quien==='Fernanda'&&s.pago==='Pendiente').reduce((t,s)=>t+parseInt(s.precio),0);
+    const ferPanel = document.createElement('div');
+    ferPanel.innerHTML = `<div class="worker-panel" style="background:linear-gradient(135deg,#F9EEF2,#F2E0E8);border:1px solid #E8A0B4;margin-bottom:14px">
+      <div class="worker-panel-head"><strong style="color:var(--rose-deep)">Fernanda</strong><span class="worker-tag" style="background:rgba(200,80,111,0.12);color:var(--rose-deep)">100%</span></div>
+      <div class="worker-row"><span style="color:var(--rose-deep)">💵 Efectivo</span><span>${fmt(ferCash)}</span></div>
+      <div class="worker-row"><span style="color:var(--rose-deep)">📲 Transferencia</span><span>${fmt(ferTransf)}</span></div>
+      ${ferPending>0?`<div class="worker-row"><span style="color:#8A6200">⏳ Pendiente</span><span style="color:#B05A00">${fmt(ferPending)}</span></div>`:''}
+      <div class="worker-divider" style="background:#E8A0B4"></div>
+      <div class="worker-row"><span style="color:var(--rose-deep)">Total cobrado propio</span><span style="font-weight:700">${fmt(ferCash+ferTransf)}</span></div>
+      <div class="worker-row"><span style="color:var(--rose-deep)">+ 40% de trabajadoras</span><span>${fmt(totalWorkersFer)}</span></div>
+      <div class="worker-divider" style="background:#E8A0B4"></div>
+      <div class="worker-total"><span style="color:var(--rose-deep)">Total Fernanda</span><span class="worker-total-val" style="color:var(--rose)">${fmt(totalFer+totalWorkersFer)}</span></div>
+    </div>`;
+    document.getElementById('workers-panels').insertAdjacentElement('afterbegin', ferPanel.firstElementChild);
+  } else {
+    // Worker view: only see their own
+    const w = currentWorkerObj;
+    const st = getWorkerStats(w.id, w.nombre, mk);
+    document.getElementById('res-metrics').innerHTML=`
+      <div class="metric"><div class="metric-lbl">Total generado</div><div class="metric-val">${fmt(st.total)}</div></div>
+      <div class="metric"><div class="metric-lbl">Servicios</div><div class="metric-val">${st.svcs.length}</div></div>
+      <div class="metric"><div class="metric-lbl">Me corresponde</div><div class="metric-val plum">${fmt(st.workerPart)}</div></div>
+      <div class="metric"><div class="metric-lbl">Adelantos</div><div class="metric-val">${fmt(st.adv)}</div></div>
+      ${st.pendingTotal>0?`<div class="metric" style="border-color:#F5D99A;background:#FFFBF0;grid-column:1/-1"><div class="metric-lbl" style="color:#8A6200">⏳ De los cuales, pendiente de cobro</div><div class="metric-val" style="color:#B05A00;font-size:18px">${fmt(st.pendingTotal)}</div></div>`:''}
+    `;
+    // Worker pending panel (her own only)
+    if(st.pendingSvcs.length>0){
+      document.getElementById('pendientes-panel').innerHTML=`
+      <div class="pending-panel">
+        <div class="pending-panel-head"><strong>⏳ Pendientes</strong><span class="pending-tag">${st.pendingSvcs.length}</span></div>
+        ${st.pendingSvcs.map(s=>`
+          <div class="pending-item">
+            <div><div class="pending-item-name">${s.nombre} ${s.apellido}</div><div class="pending-item-meta">${s.servicio} · ${fmtDateShort(s.fecha)}</div></div>
+            <div><div class="pending-item-amount">${fmt(s.precio)}</div></div>
+          </div>`).join('')}
+        <div class="pending-total-row"><span>Total pendiente</span><span class="pending-total-val">${fmt(st.pendingTotal)}</span></div>
+      </div>`;
+    } else {
+      document.getElementById('pendientes-panel').innerHTML='';
+    }
+    document.getElementById('workers-panels').innerHTML='';
+  }
+
+  const allSvcsMonth = isF ? allData.filter(s=>monthKey(s.fecha)===mk) : allData.filter(s=>monthKey(s.fecha)===mk&&s.quien===currentWorkerObj?.nombre);
+  const bc={};
+  allSvcsMonth.forEach(sv=>{const k=sv.nombre+' '+sv.apellido;if(!bc[k])bc[k]={n:k,t:0,c:0};bc[k].t+=parseInt(sv.precio);bc[k].c++;});
+  const rows=Object.values(bc).sort((a,b)=>b.t-a.t);
+  document.getElementById('res-clientes').innerHTML=rows.length?rows.map(c=>`
+    <div class="svc-item">
+      <div><div class="svc-name">${c.n}</div><div class="svc-meta">${c.c} servicio${c.c>1?'s':''}</div></div>
+      <div class="svc-amount">${fmt(c.t)}</div>
+    </div>`).join(''):'<div class="empty"><div class="empty-icon">🌸</div><p>Sin servicios este mes</p></div>';
+
+  // Render pendientes (all-time, filtered by worker if not admin)
+  renderPendientes(isF ? null : currentWorkerObj?.nombre);
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────
+function setHistPeriod(p){
+  histPeriod=p;
+  ['dia','semana','mes','ano'].forEach(x=>{ const el=document.getElementById('htab-'+x); if(el) el.classList.toggle('active',x===p); });
+  document.getElementById('hist-day-pick').style.display=(p==='dia'||p==='semana')?'block':'none';
+  document.getElementById('hist-mes').style.display=p==='mes'?'block':'none';
+  document.getElementById('hist-ano').style.display=p==='ano'?'block':'none';
+  renderHistorial();
+}
+function renderHistorial(){
+  let svcs=[],label='';
+  const d=today();
+  const isF=currentUser==='fernanda';
+  if(histPeriod==='dia'){
+    const selDay=document.getElementById('hist-day').value||d;
+    svcs=allData.filter(s=>normalizeDate(s.fecha)===selDay);
+    label='Servicios del '+fmtDateShort(selDay);
+  }else if(histPeriod==='semana'){
+    const selDay=document.getElementById('hist-day').value||d;
+    const ws=weekStart(selDay),we=weekEnd(selDay);
+    svcs=allData.filter(s=>{const n=normalizeDate(s.fecha);return n>=ws&&n<=we;});
+    label='Semana '+fmtDateShort(ws)+' — '+fmtDateShort(we);
+  }else if(histPeriod==='mes'){
+    const mk=document.getElementById('hist-mes').value;if(!mk)return;
+    svcs=allData.filter(s=>monthKey(s.fecha)===mk);
+    label=monthLabel(mk);
+  }else{
+    // año
+    const yr=document.getElementById('hist-ano').value;if(!yr)return;
+    svcs=allData.filter(s=>normalizeDate(s.fecha).startsWith(yr));
+    label='Año '+yr;
+  }
+  if(!isF) svcs=svcs.filter(s=>s.quien===currentWorkerObj?.nombre);
+  else {
+    const quienFilter = document.getElementById('hist-quien')?.value || 'todas';
+    if(quienFilter !== 'todas') svcs = svcs.filter(s=>s.quien===quienFilter);
+  }
+  svcs.sort((a,b)=>normalizeDate(b.fecha).localeCompare(normalizeDate(a.fecha)));
+  document.getElementById('hist-card-label').textContent=label;
+
+  const total=svcs.reduce((t,s)=>t+parseInt(s.precio),0);
+  const cash=svcs.filter(s=>s.pago==='Efectivo').reduce((t,s)=>t+parseInt(s.precio),0);
+  const transf=svcs.filter(s=>s.pago==='Transferencia').reduce((t,s)=>t+parseInt(s.precio),0);
+  const pending=svcs.filter(s=>s.pago==='Pendiente').reduce((t,s)=>t+parseInt(s.precio),0);
+  const pendingCount=svcs.filter(s=>s.pago==='Pendiente').length;
+  document.getElementById('hist-metrics').innerHTML=svcs.length?`
+    <div class="metric"><div class="metric-lbl">Total</div><div class="metric-val rose">${fmt(total)}</div></div>
+    <div class="metric"><div class="metric-lbl">Servicios</div><div class="metric-val">${svcs.length}</div></div>
+    <div class="metric"><div class="metric-lbl">Efectivo</div><div class="metric-val green">${fmt(cash)}</div></div>
+    <div class="metric"><div class="metric-lbl">Transfer.</div><div class="metric-val plum">${fmt(transf)}</div></div>
+    ${pending>0?`<div class="metric" style="border-color:#F5D99A;background:#FFFBF0;grid-column:1/-1"><div class="metric-lbl" style="color:#8A6200">⏳ Pendiente de cobro (${pendingCount} cliente${pendingCount!==1?'s':''})</div><div class="metric-val" style="color:#B05A00;font-size:18px">${fmt(pending)}</div></div>`:''}
+  `:'';
+
+  document.getElementById('hist-list').innerHTML=svcs.length?svcs.map(s=>{
+    const isPending = s.pago==='Pendiente';
+    const badgeClass = s.quien==='Fernanda'?'badge-f':'badge-i';
+    return `
+    <div class="svc-item${isPending?' is-pending':''}">
+      <div>
+        <div class="svc-name">${s.nombre} ${s.apellido}</div>
+        <div class="svc-meta">${fmtDateShort(s.fecha)} · ${s.servicio}${isPending?'':' · '+s.pago}</div>
+        ${isPending?'<span class="badge-pending">⏳ Pendiente de cobro</span>':''}
+      </div>
+      <div class="svc-right">
+        <div class="svc-amount" style="${isPending?'color:#B05A00':''}">${fmt(s.precio)}</div>
+        <span class="svc-badge ${badgeClass}">${s.quien}</span>
+        ${isF?`<div class="svc-actions">
+          <button class="svc-action-btn svc-edit-btn" onclick="openEdit('${s.id}')" style="${isPending?'background:#FFF0C8;color:#7A4F00':''}">${isPending?'💰 Cobrar':'Editar'}</button>
+          <button class="svc-action-btn svc-del-btn" onclick="confirmDelete('${s.id}')">Eliminar</button>
+        </div>`:''}
+      </div>
+    </div>`}).join(''):'<div class="empty"><div class="empty-icon">📋</div><p>Sin servicios</p></div>';
+}
+
+// ── COD ────────────────────────────────────────────────────────────
+function openCOD(){
+  const d=today();
+  const svcsHoy=allData.filter(s=>normalizeDate(s.fecha)===d);
+  const paidHoy=svcsHoy.filter(s=>s.pago!=='Pendiente');
+  const cash=paidHoy.filter(s=>s.pago==='Efectivo').reduce((t,s)=>t+parseInt(s.precio),0);
+  const transf=paidHoy.filter(s=>s.pago==='Transferencia').reduce((t,s)=>t+parseInt(s.precio),0);
+  const pendAmt=svcsHoy.filter(s=>s.pago==='Pendiente').reduce((t,s)=>t+parseInt(s.precio),0);
+  const nEf=paidHoy.filter(s=>s.pago==='Efectivo').length;
+  const nTr=paidHoy.filter(s=>s.pago==='Transferencia').length;
+  const nPd=svcsHoy.filter(s=>s.pago==='Pendiente').length;
+  document.getElementById('cod-date').textContent=fmtDateLong(d);
+  document.getElementById('cod-boxes').innerHTML=`
+    <div class="cod-box cash"><div class="cod-box-icon">💵</div><div class="cod-box-label">Efectivo</div><div class="cod-box-amount">${fmt(cash)}</div><div class="cod-box-sub">${nEf} servicio${nEf!==1?'s':''}</div></div>
+    <div class="cod-box transfer"><div class="cod-box-icon">📲</div><div class="cod-box-label">Transferencia</div><div class="cod-box-amount">${fmt(transf)}</div><div class="cod-box-sub">${nTr} servicio${nTr!==1?'s':''}</div></div>
+    ${nPd>0?`<div class="cod-box" style="background:#FFFBF0;border:1px solid #F5D99A;grid-column:1/-1"><div class="cod-box-icon">⏳</div><div class="cod-box-label" style="color:#7A4F00">Pendiente de cobro</div><div class="cod-box-amount" style="color:#B05A00">${fmt(pendAmt)}</div><div class="cod-box-sub">${nPd} cliente${nPd!==1?'s':''}</div></div>`:''}
+  `;
+  document.getElementById('cod-total').textContent=fmt(cash+transf);
+  document.getElementById('cod-detail').innerHTML=svcsHoy.length?svcsHoy.map(s=>`
+    <div class="cod-svc-row" style="${s.pago==='Pendiente'?'opacity:0.6':''}">
+      <span>${s.nombre} ${s.apellido} — ${s.servicio} (${s.quien})${s.pago==='Pendiente'?' ⏳':''}</span>
+      <span style="font-weight:600;${s.pago==='Pendiente'?'color:#B05A00':''}">${fmt(s.precio)}</span>
+    </div>`).join('')
+    :'<div style="text-align:center;color:var(--ink-soft);font-size:13px;padding:12px 0">Sin servicios hoy</div>';
+  openModal('cod-modal');
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────
+function renderSearch(){
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const sugEl = document.getElementById('search-suggestions');
+  const resEl = document.getElementById('search-results');
+
+  if(q.length < 2){
+    sugEl.innerHTML = '';
+    resEl.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Escribe el nombre de una clienta</p></div>';
+    return;
+  }
+
+  // Build client index
+  const clients = {};
+  const src = currentUser==='fernanda' ? allData : allData.filter(s=>s.quien===currentWorkerObj?.nombre);
+  src.forEach(s=>{
+    const key = (s.nombre+' '+s.apellido).toLowerCase();
+    if(!clients[key]) clients[key] = { nombre: s.nombre, apellido: s.apellido, svcs: [] };
+    clients[key].svcs.push(s);
+  });
+
+  // Suggestions (name chips)
+  const matches = Object.values(clients).filter(c=>{
+    const full = (c.nombre+' '+c.apellido).toLowerCase();
+    return full.includes(q);
+  });
+
+  if(!matches.length){
+    sugEl.innerHTML = '';
+    resEl.innerHTML = '<div class="empty"><div class="empty-icon">🌸</div><p>No se encontraron clientas</p></div>';
+    return;
+  }
+
+  // Show name chips
+  sugEl.innerHTML = matches.slice(0,8).map(c=>`
+    <button onclick="selectClient('${c.nombre}','${c.apellido}')"
+      style="display:inline-block;margin:3px;padding:7px 14px;background:var(--rose-pale);color:var(--rose-deep);border:1.5px solid var(--rose-mid,#E8A0B4);border-radius:20px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer">
+      ${c.nombre} ${c.apellido}
+    </button>`).join('');
+
+  // Auto-show first match if only one
+  if(matches.length === 1) renderClientCard(matches[0]);
+  else resEl.innerHTML = '';
+}
+
+function selectClient(nombre, apellido){
+  document.getElementById('search-input').value = nombre+' '+apellido;
+  const src = currentUser==='fernanda' ? allData : allData.filter(s=>s.quien===currentWorkerObj?.nombre);
+  const svcs = src.filter(s=>s.nombre===nombre && s.apellido===apellido);
+  renderClientCard({ nombre, apellido, svcs });
+}
+
+function renderClientCard(client){
+  const { nombre, apellido, svcs } = client;
+  if(!svcs.length){ document.getElementById('search-results').innerHTML='<div class="empty"><p>Sin servicios</p></div>'; return; }
+
+  svcs.sort((a,b)=>normalizeDate(b.fecha).localeCompare(normalizeDate(a.fecha)));
+
+  const total = svcs.reduce((t,s)=>t+parseInt(s.precio),0);
+  const visits = svcs.length;
+  const lastVisit = fmtDateLong(svcs[0].fecha);
+  const firstVisit = fmtDateLong(svcs[svcs.length-1].fecha);
+  const avg = Math.round(total/visits);
+  const pending = svcs.filter(s=>s.pago==='Pendiente').reduce((t,s)=>t+parseInt(s.precio),0);
+
+  // By year
+  const byYear = {};
+  svcs.forEach(s=>{ const y=normalizeDate(s.fecha).substring(0,4); if(!byYear[y])byYear[y]=0; byYear[y]+=parseInt(s.precio); });
+
+  document.getElementById('search-results').innerHTML = `
+    <div class="card" style="border-color:var(--rose-mid,#E8A0B4)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--rose-pale);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:500;color:var(--rose)">${nombre.charAt(0)}${apellido.charAt(0)}</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:500">${nombre} ${apellido}</div>
+          <div style="font-size:12px;color:var(--ink-soft);font-weight:300">Clienta desde ${firstVisit}</div>
+        </div>
+      </div>
+      <div class="metrics-row" style="margin-bottom:14px">
+        <div class="metric"><div class="metric-lbl">Total gastado</div><div class="metric-val rose">${fmt(total)}</div></div>
+        <div class="metric"><div class="metric-lbl">Visitas</div><div class="metric-val">${visits}</div></div>
+        <div class="metric"><div class="metric-lbl">Promedio/visita</div><div class="metric-val">${fmt(avg)}</div></div>
+        <div class="metric"><div class="metric-lbl">Última visita</div><div class="metric-val" style="font-size:13px;font-weight:500">${fmtDateShort(svcs[0].fecha)}</div></div>
+        ${pending>0?`<div class="metric" style="border-color:#F5D99A;background:#FFFBF0;grid-column:1/-1"><div class="metric-lbl" style="color:#8A6200">⏳ Pendiente</div><div class="metric-val" style="color:#B05A00;font-size:18px">${fmt(pending)}</div></div>`:''}
+      </div>
+      ${Object.keys(byYear).sort().reverse().length>1?`
+      <div style="margin-bottom:14px">
+        <div class="card-label">Por año</div>
+        ${Object.keys(byYear).sort().reverse().map(y=>`
+          <div class="svc-item">
+            <span style="font-weight:500">${y}</span>
+            <span style="font-weight:600;color:var(--rose)">${fmt(byYear[y])}</span>
+          </div>`).join('')}
+      </div>`:''}
+      <div class="card-label">Visitas</div>
+      ${svcs.map(s=>`
+        <div class="svc-item${s.pago==='Pendiente'?' is-pending':''}">
+          <div>
+            <div class="svc-name">${s.servicio}</div>
+            <div class="svc-meta">${fmtDateLong(s.fecha)} · ${s.quien}</div>
+            ${s.pago==='Pendiente'?'<span class="badge-pending">⏳ Pendiente</span>':''}
+          </div>
+          <div class="svc-right">
+            <div class="svc-amount" style="${s.pago==='Pendiente'?'color:#B05A00':''}">${fmt(s.precio)}</div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:2px">${s.pago==='Pendiente'?'⏳':s.pago==='Efectivo'?'💵':'📲'} ${s.pago}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── YEAR FILTER ───────────────────────────────────────────────────
+function allYears(){
+  const years = new Set(allData.map(s=>normalizeDate(s.fecha).substring(0,4)).filter(Boolean));
+  years.add(new Date().getFullYear().toString());
+  return [...years].sort().reverse();
+}
+
+function populateYears(){
+  const years = allYears();
+  const sel = document.getElementById('hist-ano');
+  const cur = sel.value || years[0];
+  sel.innerHTML = years.map(y=>`<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');
+}
+
+// ── UPDATE populateMonths to also populate years ───────────────────
+function populateMonths(){
+  const ms=allMonths();
+  ['res-mes','hist-mes'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const cur=sel.value||ms[0];
+    sel.innerHTML=ms.map(m=>`<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');
+  });
+  populateYears();
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────
+let chTC = null;
+function renderGraficos(){
+  const months=allMonths().slice(0,6).reverse();
+  const labels=months.map(m=>monthLabel(m).split(' ')[0]);
+  const workerColors=['rgba(123,107,168,0.85)','rgba(45,122,90,0.85)','rgba(186,117,23,0.85)','rgba(74,63,82,0.85)'];
+  const datasets=[{label:'Fernanda',data:months.map(mk=>allData.filter(s=>monthKey(s.fecha)===mk&&s.quien==='Fernanda').reduce((t,s)=>t+parseInt(s.precio),0)),backgroundColor:'rgba(200,80,111,0.85)',borderRadius:5,borderSkipped:false}];
+  workers.forEach((w,i)=>{ datasets.push({label:w.nombre,data:months.map(mk=>allData.filter(s=>monthKey(s.fecha)===mk&&s.quien===w.nombre).reduce((t,s)=>t+parseInt(s.precio),0)),backgroundColor:workerColors[i%workerColors.length],borderRadius:5,borderSkipped:false}); });
+
+  document.getElementById('chart-legend').innerHTML=['Fernanda',...workers.map(w=>w.nombre)].map((n,i)=>`<span><span class="legend-dot" style="background:${i===0?'rgba(200,80,111,0.85)':workerColors[(i-1)%workerColors.length]}"></span>${n}</span>`).join('');
+
+  if(chI){chI.destroy();chI=null;}
+  chI=new Chart(document.getElementById('ch-ingresos'),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'k',font:{size:11,family:'DM Sans'}},grid:{color:'rgba(0,0,0,0.04)'},border:{display:false}},x:{ticks:{font:{size:11,family:'DM Sans'}},grid:{display:false},border:{display:false}}}}});
+
+  const mani=allData.filter(s=>s.servicio==='Manicure').length;
+  const pedi=allData.filter(s=>s.servicio==='Pedicure').length;
+  if(chT){chT.destroy();chT=null;}
+  chT=new Chart(document.getElementById('ch-tipos'),{type:'doughnut',data:{labels:['Manicure','Pedicure'],datasets:[{data:[mani,pedi],backgroundColor:['rgba(200,80,111,0.85)','rgba(123,107,168,0.85)'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11,family:'DM Sans'},boxWidth:10,padding:10}}},cutout:'65%'}});
+
+  const ef=allData.filter(s=>s.pago==='Efectivo').length;
+  const tr=allData.filter(s=>s.pago==='Transferencia').length;
+  if(chP){chP.destroy();chP=null;}
+  chP=new Chart(document.getElementById('ch-pago'),{type:'doughnut',data:{labels:['Efectivo','Transferencia'],datasets:[{data:[ef,tr],backgroundColor:['rgba(200,80,111,0.85)','rgba(123,107,168,0.85)'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11,family:'DM Sans'},boxWidth:10,padding:10}}},cutout:'65%'}});
+
+  // Top 10 clients
+  const clientTotals = {};
+  allData.forEach(s=>{
+    const k = s.nombre+' '+s.apellido;
+    if(!clientTotals[k]) clientTotals[k]=0;
+    clientTotals[k]+=parseInt(s.precio);
+  });
+  const top10 = Object.entries(clientTotals).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const topLabels = top10.map(([n])=>n.length>14?n.substring(0,14)+'…':n);
+  const topData   = top10.map(([,v])=>v);
+
+  if(chTC){chTC.destroy();chTC=null;}
+  chTC=new Chart(document.getElementById('ch-topclientes'),{
+    type:'bar',
+    data:{labels:topLabels,datasets:[{data:topData,backgroundColor:'rgba(200,80,111,0.80)',borderRadius:5,borderSkipped:false}]},
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.raw)}}},
+      scales:{
+        x:{ticks:{callback:v=>'$'+Math.round(v/1000)+'k',font:{size:10,family:'DM Sans'}},grid:{color:'rgba(0,0,0,0.04)'},border:{display:false}},
+        y:{ticks:{font:{size:11,family:'DM Sans'}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModalOutside(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+// ── NAV ───────────────────────────────────────────────────────────
+function showSec(id, btn){
+  const isF = currentUser==='fernanda';
+  if(id==='graficos' && !isF){ showToast('Solo Fernanda puede ver los gráficos',true); return; }
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  const nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('active');
+  if(id==='graficos') renderGraficos();
+  if(id==='resumen'){populateMonths();renderResumen();}
+  if(id==='historial'){populateMonths();document.getElementById('hist-day').value=today();renderHistorial();}
+  if(id==='ajustes'){renderWorkersList();}
+  if(id==='buscar'){
+    document.getElementById('search-input').value='';
+    document.getElementById('search-suggestions').innerHTML='';
+    document.getElementById('search-results').innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>Escribe el nombre de una clienta</p></div>';
+    setTimeout(()=>document.getElementById('search-input').focus(),150);
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'')+' show';setTimeout(()=>t.classList.remove('show'),2500);}
+
+init();
+</script>
+</body>
+</html>
