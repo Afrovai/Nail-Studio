@@ -274,6 +274,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
         <select id="login-user" onchange="onUserSelect()">
           <option value="">Selecciona...</option>
           <option value="fernanda">💗 Fernanda (Admin)</option>
+          <option value="nicolas">💙 Nicolas (Admin)</option>
         </select>
       </div>
       <div class="field" id="pin-field" style="display:none">
@@ -446,11 +447,11 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
         <div class="profile-avatar" id="sett-avatar"></div>
         <div><div class="profile-name" id="sett-name"></div><div class="profile-role" id="sett-rol"></div></div>
       </div>
-      <!-- Solo Fernanda ve esto -->
+      <!-- Solo administradores ven esto -->
       <div id="admin-panel" style="display:none">
         <div class="card">
           <div class="card-label">Cuenta</div>
-          <div class="sett-row"><span class="sett-lbl">Cambiar mi PIN</span><button class="btn-ghost" onclick="changeFernandaPin()">Cambiar</button></div>
+          <div class="sett-row"><span class="sett-lbl">Cambiar mi PIN</span><button class="btn-ghost" onclick="changeMyPin()">Cambiar</button></div>
           <div class="sett-row"><span class="sett-lbl">Sincronizar datos</span><button class="btn-ghost" onclick="syncAll()">Sync</button></div>
         </div>
         <div class="card">
@@ -613,9 +614,13 @@ const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzeOO-74jbuHkAnCwXyE2D
 // ── STATE ──────────────────────────────────────────────────────────
 // workers: [{id, nombre, pct, color, pin}]  (Ivette is a worker too, with pct:60)
 let workers = [];
-let PINS = { fernanda: '1234' };
-let currentUser = null; // 'fernanda' or worker id
+let PINS = { fernanda: '1234', nicolas: '1111' };
+let currentUser = null; // admin id ('fernanda'/'nicolas') or worker id
 let currentWorkerObj = null;
+
+const ADMIN_NAMES = { fernanda: 'Fernanda', nicolas: 'Nicolas' };
+function isAdmin(u){ return u in ADMIN_NAMES; }
+function adminName(u){ return ADMIN_NAMES[u] || u; }
 
 let selectedServicio = 'Manicure';
 let selectedPago = 'Efectivo';
@@ -652,7 +657,8 @@ function loadAll(){
   try{
     const d = JSON.parse(localStorage.getItem('ns_store')||'{}');
     workers = d.workers || defaultWorkers();
-    PINS = d.pins || { fernanda:'1234' };
+    PINS = d.pins || { fernanda:'1234', nicolas:'1111' };
+    if(!('nicolas' in PINS)) PINS.nicolas = '1111';
     allData = d.services || [];
     allAdelantos = d.adelantos || [];
 
@@ -674,7 +680,7 @@ function loadAll(){
 
     if(migrated) saveAll();
 
-  }catch(e){ workers=defaultWorkers(); PINS={fernanda:'1234'}; allData=[]; allAdelantos=[]; }
+  }catch(e){ workers=defaultWorkers(); PINS={fernanda:'1234', nicolas:'1111'}; allData=[]; allAdelantos=[]; }
 }
 function saveAll(){
   try{ localStorage.setItem('ns_store', JSON.stringify({workers,pins:PINS,services:allData,adelantos:allAdelantos})); }catch(e){}
@@ -684,14 +690,14 @@ function defaultWorkers(){
 }
 
 function resolveCurrentWorker(){
-  if(currentUser==='fernanda'){ currentWorkerObj=null; return; }
+  if(isAdmin(currentUser)){ currentWorkerObj=null; return; }
   currentWorkerObj = workers.find(w=>w.id===currentUser) || null;
 }
 
 function buildLoginOptions(){
   const sel = document.getElementById('login-user');
-  // Keep fernanda option, rebuild worker options
-  while(sel.options.length>2) sel.remove(2);
+  // Keep admin options, rebuild worker options
+  while(sel.options.length>3) sel.remove(3);
   workers.forEach(w=>{
     const opt = document.createElement('option');
     opt.value = w.id; opt.textContent = '💜 '+w.nombre;
@@ -726,7 +732,7 @@ function doLogin(){
   const user = document.getElementById('login-user').value;
   const err = document.getElementById('login-err');
   if(!user){ err.textContent='Selecciona un usuario'; err.style.display='block'; return; }
-  const correctPin = user==='fernanda' ? PINS.fernanda : (workers.find(w=>w.id===user)||{}).pin;
+  const correctPin = isAdmin(user) ? PINS[user] : (workers.find(w=>w.id===user)||{}).pin;
   if(!correctPin || pinBuffer!==correctPin){
     err.textContent='PIN incorrecto'; err.style.display='block';
     pinBuffer=''; document.getElementById('pin-hidden').value=''; updatePinDots();
@@ -749,8 +755,8 @@ function logout(){
 // ── START APP ──────────────────────────────────────────────────────
 function startApp(){
   showScreen('app');
-  const isF = currentUser==='fernanda';
-  const name = isF ? 'Fernanda' : currentWorkerObj?.nombre || currentUser;
+  const isF = isAdmin(currentUser);
+  const name = isF ? adminName(currentUser) : currentWorkerObj?.nombre || currentUser;
   const initials = name.charAt(0).toUpperCase();
 
   document.getElementById('hdr-avatar').textContent = initials;
@@ -762,20 +768,20 @@ function startApp(){
   document.getElementById('sett-avatar').textContent = initials;
   document.getElementById('sett-avatar').className = 'profile-avatar ' + (isF ? 'f' : 'w');
   document.getElementById('sett-name').textContent = name;
-  document.getElementById('sett-rol').textContent = isF ? 'Administradora' : 'Colaboradora';
+  document.getElementById('sett-rol').textContent = isF ? 'Administrador/a' : 'Colaboradora';
   document.getElementById('admin-panel').style.display = isF ? 'block' : 'none';
   document.getElementById('worker-panel').style.display = isF ? 'none' : 'block';
 
-  // Nuevo: Fernanda chooses worker, trabajadoras only register for themselves
+  // Nuevo: los administradores eligen la trabajadora, las colaboradoras solo registran para sí mismas
   document.getElementById('quien-row').style.display = isF ? 'block' : 'none';
 
-  // COD only for Fernanda
+  // COD solo para administradores
   document.getElementById('cod-trigger').style.display = isF ? 'block' : 'none';
 
   // Hide Gráficos nav tab for workers
   document.getElementById('nav-graficos').style.display = isF ? 'flex' : 'none';
 
-  // Historial worker filter — only for Fernanda
+  // Historial worker filter — solo para administradores
   document.getElementById('hist-quien-filter').style.display = isF ? 'block' : 'none';
   if(isF) rebuildHistQuienFilter();
 
@@ -801,7 +807,7 @@ function rebuildHistQuienFilter(){
 function rebuildQuienSelect(){
   const sel = document.getElementById('f-quien');
   sel.innerHTML = '';
-  if(currentUser==='fernanda'){
+  if(isAdmin(currentUser)){
     const optF = document.createElement('option'); optF.value='Fernanda'; optF.textContent='💗 Fernanda'; sel.appendChild(optF);
     workers.forEach(w=>{ const o=document.createElement('option'); o.value=w.nombre; o.textContent='💜 '+w.nombre; sel.appendChild(o); });
   } else {
@@ -840,9 +846,9 @@ async function registrar(){
   const apellido=document.getElementById('f-apellido').value.trim();
   const fecha=document.getElementById('f-fecha').value;
   const precio=parseInt(document.getElementById('f-precio').value);
-  const quien = currentUser==='fernanda' ? document.getElementById('f-quien').value : (currentWorkerObj?.nombre||'');
+  const quien = isAdmin(currentUser) ? document.getElementById('f-quien').value : (currentWorkerObj?.nombre||'');
   if(!nombre||!apellido||!fecha||!precio||precio<=0){showToast('Completa todos los campos',true);return;}
-  const payload={action:'addService',nombre,apellido,fecha,servicio:selectedServicio,precio,quien,pago:selectedPago,registradoPor:currentUser==='fernanda'?'Fernanda':quien,timestamp:new Date().toISOString()};
+  const payload={action:'addService',nombre,apellido,fecha,servicio:selectedServicio,precio,quien,pago:selectedPago,registradoPor:isAdmin(currentUser)?adminName(currentUser):quien,timestamp:new Date().toISOString()};
   allData.push({...payload,id:Date.now()});saveAll();
   try{await apiPost(payload);showToast('✓ Guardado en Google Sheets');}
   catch(e){addPending(payload);showToast('Guardado sin conexión');}
@@ -910,7 +916,7 @@ async function confirmDeleteAdelanto(){
 
 // ── EDIT SERVICE (admin only) ─────────────────────────────────────
 function openEdit(id){
-  if(currentUser!=='fernanda'){showToast('Solo Fernanda puede editar servicios',true);return;}
+  if(!isAdmin(currentUser)){showToast('Solo un administrador puede editar servicios',true);return;}
   const svc=allData.find(s=>String(s.id)===String(id));
   if(!svc)return;
   document.getElementById('edit-id').value=id;
@@ -945,7 +951,7 @@ async function saveEdit(){
   closeModal('edit-modal');populateMonths();renderResumen();renderHistorial();
 }
 function confirmDelete(id){
-  if(currentUser!=='fernanda'){showToast('Solo Fernanda puede eliminar servicios',true);return;}
+  if(!isAdmin(currentUser)){showToast('Solo un administrador puede eliminar servicios',true);return;}
   const svc=allData.find(s=>String(s.id)===String(id));
   if(!svc||!confirm(`¿Eliminar servicio de ${svc.nombre} ${svc.apellido} — ${fmt(svc.precio)}?`))return;
   allData=allData.filter(s=>String(s.id)!==String(id));saveAll();
@@ -1078,7 +1084,7 @@ function editSelectPago(v){
   document.getElementById('eseg-tr').classList.toggle('active',v==='Transferencia');
   document.getElementById('eseg-pd').classList.toggle('active',v==='Pendiente');
 }
-function changeFernandaPin(){const p=prompt('Nuevo PIN para Fernanda (4 dígitos):');if(!p||p.length!==4||isNaN(p)){alert('El PIN debe ser 4 dígitos');return;}PINS.fernanda=p;saveAll();showToast('PIN actualizado ✓');}
+function changeMyPin(){const p=prompt('Nuevo PIN para '+adminName(currentUser)+' (4 dígitos):');if(!p||p.length!==4||isNaN(p)){alert('El PIN debe ser 4 dígitos');return;}PINS[currentUser]=p;saveAll();showToast('PIN actualizado ✓');}
 function changeWorkerPin(){
   const p=prompt('Nuevo PIN (4 dígitos):');
   if(!p||p.length!==4||isNaN(p)){alert('El PIN debe ser 4 dígitos');return;}
@@ -1129,7 +1135,7 @@ function renderPendientes(filterWorkerName){
     byClient[k].items.push(s); byClient[k].total+=parseInt(s.precio);
   });
 
-  const isF = currentUser==='fernanda';
+  const isF = isAdmin(currentUser);
   el.innerHTML=`
     <div class="pendientes-panel">
       <div class="pendientes-head">
@@ -1176,7 +1182,7 @@ function getWorkerStats(workerId, workerName, mk){
 
 function renderResumen(){
   const mk = document.getElementById('res-mes').value; if(!mk) return;
-  const isF = currentUser==='fernanda';
+  const isF = isAdmin(currentUser);
 
   // Fernanda's own services (including pending)
   const svcsFer = allData.filter(s=>monthKey(s.fecha)===mk && s.quien==='Fernanda');
@@ -1343,7 +1349,7 @@ function setHistPeriod(p){
 function renderHistorial(){
   let svcs=[],label='';
   const d=today();
-  const isF=currentUser==='fernanda';
+  const isF=isAdmin(currentUser);
   if(histPeriod==='dia'){
     const selDay=document.getElementById('hist-day').value||d;
     svcs=allData.filter(s=>normalizeDate(s.fecha)===selDay);
@@ -1446,7 +1452,7 @@ function renderSearch(){
 
   // Build client index
   const clients = {};
-  const src = currentUser==='fernanda' ? allData : allData.filter(s=>s.quien===currentWorkerObj?.nombre);
+  const src = isAdmin(currentUser) ? allData : allData.filter(s=>s.quien===currentWorkerObj?.nombre);
   src.forEach(s=>{
     const key = (s.nombre+' '+s.apellido).toLowerCase();
     if(!clients[key]) clients[key] = { nombre: s.nombre, apellido: s.apellido, svcs: [] };
@@ -1479,7 +1485,7 @@ function renderSearch(){
 
 function selectClient(nombre, apellido){
   document.getElementById('search-input').value = nombre+' '+apellido;
-  const src = currentUser==='fernanda' ? allData : allData.filter(s=>s.quien===currentWorkerObj?.nombre);
+  const src = isAdmin(currentUser) ? allData : allData.filter(s=>s.quien===currentWorkerObj?.nombre);
   const svcs = src.filter(s=>s.nombre===nombre && s.apellido===apellido);
   renderClientCard({ nombre, apellido, svcs });
 }
@@ -1625,8 +1631,8 @@ function closeModalOutside(e,id){if(e.target===document.getElementById(id))close
 
 // ── NAV ───────────────────────────────────────────────────────────
 function showSec(id, btn){
-  const isF = currentUser==='fernanda';
-  if(id==='graficos' && !isF){ showToast('Solo Fernanda puede ver los gráficos',true); return; }
+  const isF = isAdmin(currentUser);
+  if(id==='graficos' && !isF){ showToast('Solo un administrador puede ver los gráficos',true); return; }
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
