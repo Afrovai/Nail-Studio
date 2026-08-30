@@ -874,8 +874,19 @@ function migrateData(){
   });
 }
 
+async function apiPost(payload){ const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)}); return await r.json(); }
+function getPending(){return JSON.parse(localStorage.getItem('ns_pending')||'[]');}
+function addPending(item){const q=getPending();q.push(item);localStorage.setItem('ns_pending',JSON.stringify(q));checkPending();}
+function checkPending(){const q=getPending();const b=document.getElementById('sync-bar');if(!b)return;if(q.length){b.style.display='flex';document.getElementById('pending-n').textContent=q.length;}else b.style.display='none';}
+async function syncPending(){const q=getPending();if(!q.length)return;showToast('Sincronizando...');let ok=0;for(const item of q){try{await apiPost(item);ok++;}catch(e){}}if(ok===q.length){localStorage.setItem('ns_pending','[]');showToast('Sincronizado ✓');fetchData();}else showToast('Error: '+ok+'/'+q.length,true);checkPending();}
+
+// Content signature (not id — the server assigns its own id on addService/addAdelanto,
+// independent from the client's local id, so id can't be used to detect already-synced records)
+function svcSig(s){ return [s.fecha,s.nombre,s.apellido,s.servicio,s.precio,s.quien,s.pago].join('|'); }
+function adSig(a){ return [a.workerId,a.fecha,a.monto,a.razon].join('|'); }
+
 async function fetchData(){
-  loadLocal();
+  loadAll();
   migrateData();
   populateMonths(); renderResumen(); renderHistorial(); checkPending();
   try{
@@ -889,12 +900,49 @@ async function fetchData(){
     try{ json = JSON.parse(text); }
     catch(e){ throw new Error('Respuesta inválida del servidor'); }
     if(json.error) throw new Error(json.error);
-    allData = json.services||[];
-    allAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
+
+    const serverServices = json.services||[];
+    const serverAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
+
+    // Recover records that exist only on this device — e.g. writes that failed
+    // silently while the sync engine was broken (2026-08-10 → 2026-08-30) — before
+    // trusting the server list as the source of truth. Matches by content, not id,
+    // since a matching count is consumed per record so genuine duplicates aren't lost.
+    const svcCounts = new Map();
+    serverServices.forEach(s=>{ const k=svcSig(s); svcCounts.set(k,(svcCounts.get(k)||0)+1); });
+    const localOnlyServices = allData.filter(s=>{
+      const k=svcSig(s), n=svcCounts.get(k)||0;
+      if(n>0){ svcCounts.set(k,n-1); return false; }
+      return true;
+    });
+    const adCounts = new Map();
+    serverAdelantos.forEach(a=>{ const k=adSig(a); adCounts.set(k,(adCounts.get(k)||0)+1); });
+    const localOnlyAdelantos = allAdelantos.filter(a=>{
+      const k=adSig(a), n=adCounts.get(k)||0;
+      if(n>0){ adCounts.set(k,n-1); return false; }
+      return true;
+    });
+
+    if(localOnlyServices.length || localOnlyAdelantos.length){
+      showToast('Recuperando '+(localOnlyServices.length+localOnlyAdelantos.length)+' registro(s) sin sincronizar…');
+      for(const s of localOnlyServices){
+        const payload={action:'addService',nombre:s.nombre,apellido:s.apellido,fecha:s.fecha,servicio:s.servicio,precio:s.precio,quien:s.quien,pago:s.pago,registradoPor:s.registradoPor||s.quien,timestamp:s.timestamp||new Date().toISOString()};
+        try{ await apiPost(payload); }catch(e){ addPending(payload); }
+      }
+      for(const a of localOnlyAdelantos){
+        const payload={action:'addAdelanto',id:a.id,workerId:a.workerId,fecha:a.fecha,monto:a.monto,razon:a.razon,timestamp:a.timestamp||new Date().toISOString()};
+        try{ await apiPost(payload); }catch(e){ addPending(payload); }
+      }
+    }
+
+    allData = [...serverServices, ...localOnlyServices];
+    allAdelantos = [...serverAdelantos, ...localOnlyAdelantos];
     migrateData();
     saveAll();
     populateMonths(); renderResumen(); renderHistorial();
-    showToast('✓ Datos actualizados');
+    showToast(localOnlyServices.length||localOnlyAdelantos.length
+      ? '✓ '+(localOnlyServices.length+localOnlyAdelantos.length)+' registro(s) recuperado(s) y sincronizado(s)'
+      : '✓ Datos actualizados');
   }catch(e){
     showToast('⚠️ '+e.message, true);
   }
@@ -930,34 +978,7 @@ async function runDiagnostic(){
 }
 
 async function forceSync(){
-  showToast('Recargando...');
-  try{
-    localStorage.removeItem('ns_data');
-    allData=[]; allAdelantos=[];
-    const res = await fetch(SCRIPT_URL+'?action=getAll&t='+Date.now(), {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const text = await res.text();
-    const json = JSON.parse(text);
-    if(json.error) throw new Error(json.error);
-    allData = json.services||[];
-    allAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
-    migrateData();
-    saveAll();
-    populateMonths(); renderResumen(); renderHistorial();
-    showToast('✓ '+allData.length+' registros cargados');
-  }catch(e){
-    showToast('Error: '+e.message, true);
-  }
-}
-async function forceSync(){
-  showToast('Recargando datos...');
-  localStorage.removeItem('ns_data'); // clear local cache
-  allData=[]; allAdelantos=[];
   await fetchData();
-  showToast('✓ Datos actualizados');
 }
 
 // ── AFRO MESSAGES 💅 ──────────────────────────────────────────────
