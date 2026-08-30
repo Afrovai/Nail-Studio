@@ -384,7 +384,8 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
     <div class="sec" id="sec-resumen">
       <div class="sec-head"><h2>Resumen</h2><p>Contabilidad por mes</p></div>
       <select class="month-sel" id="res-mes" onchange="renderResumen()"></select>
-      <button class="btn-ghost" id="btn-reporte-mensual" onclick="generarReporteMensual()" style="display:none;width:100%;margin-bottom:14px">📄 Reporte mensual</button>
+      <button class="btn-ghost" id="btn-reporte-mensual" onclick="generarReporteMensual()" style="display:none;width:100%;margin-bottom:10px">📄 Ver reporte mensual</button>
+      <button class="btn-ghost" id="btn-compartir-reporte" onclick="compartirReporteMensual()" style="display:none;width:100%;margin-bottom:14px;background:var(--rose-pale);color:var(--rose-deep)">📤 Compartir reporte</button>
       <div class="metrics-row" id="res-metrics"><div class="spinner">Cargando...</div></div>
       <div id="workers-panels"></div>
       <!-- PENDIENTES PANEL -->
@@ -1412,6 +1413,10 @@ function renderResumen(){
   const mk = document.getElementById('res-mes').value; if(!mk) return;
   const isF = isAdmin(currentUser);
 
+  // A previously generated report may no longer match the selected month/data
+  const cbtn=document.getElementById('btn-compartir-reporte');
+  if(cbtn) cbtn.style.display='none';
+
   // Fernanda's own services (including pending)
   const svcsFer = allData.filter(s=>monthKey(s.fecha)===mk && s.quien==='Fernanda');
   const totalFer = svcsFer.reduce((t,s)=>t+parseInt(s.precio),0);
@@ -1686,14 +1691,30 @@ async function generarReporteMensual(){
   const fileName = 'Reporte-'+mk+'.pdf';
   const pdfBlob = doc.output('blob');
 
-  if(navigator.canShare && navigator.canShare({files:[new File([pdfBlob],fileName,{type:'application/pdf'})]})){
+  if(lastReportUrl) URL.revokeObjectURL(lastReportUrl);
+  lastReportBlob = pdfBlob;
+  lastReportName = fileName;
+  lastReportUrl = URL.createObjectURL(pdfBlob);
+  lastReportLabel = 'Reporte de '+monthLabel(mk);
+
+  window.open(lastReportUrl, '_blank');
+  document.getElementById('btn-compartir-reporte').style.display = 'block';
+  showToast('Reporte abierto — revísalo y toca "Compartir reporte" cuando quieras enviarlo');
+}
+
+let lastReportBlob=null, lastReportName=null, lastReportUrl=null, lastReportLabel=null;
+async function compartirReporteMensual(){
+  if(!lastReportBlob){ showToast('Primero genera el reporte',true); return; }
+  const file = new File([lastReportBlob], lastReportName, {type:'application/pdf'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
     try{
-      await navigator.share({files:[new File([pdfBlob],fileName,{type:'application/pdf'})], title:'Reporte mensual', text:'Reporte de '+monthLabel(mk)});
+      await navigator.share({files:[file], title:'Reporte mensual', text:lastReportLabel});
     }catch(e){
       if(e.name!=='AbortError') showToast('No se pudo compartir: '+e.message, true);
     }
   } else {
-    doc.save(fileName);
+    const a=document.createElement('a'); a.href=lastReportUrl; a.download=lastReportName;
+    document.body.appendChild(a); a.click(); a.remove();
     showToast('PDF descargado — compártelo por WhatsApp manualmente');
   }
 }
