@@ -52,6 +52,8 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 .pin-tap-area{cursor:pointer;padding:10px 0;text-align:center;font-size:13px;color:var(--ink-soft)}
 .btn-main{width:100%;padding:14px;background:var(--rose);color:#fff;border:none;border-radius:var(--r12);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;margin-top:6px}
 .btn-main:active{transform:scale(0.98);background:var(--rose-deep)}
+.btn-main.btn-success{background:#2E9E5B;animation:btnSuccessPop 0.35s ease}
+@keyframes btnSuccessPop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
 .btn-main:disabled{opacity:0.5;cursor:not-allowed}
 .err-msg{background:#FEF0EE;border:1px solid #F5C4BE;border-radius:var(--r8);padding:10px 12px;color:var(--danger);font-size:13px;margin-bottom:14px;display:none}
 
@@ -331,10 +333,10 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
       <div class="sec-head"><h2>Nuevo servicio</h2><p>Registra el servicio realizado</p></div>
       <div class="card">
         <div class="f-2col">
-          <div class="f-row"><label>Nombre</label><input id="f-nombre" type="text" placeholder="María" autocomplete="off"></div>
-          <div class="f-row"><label>Apellido</label><input id="f-apellido" type="text" placeholder="González" autocomplete="off"></div>
+          <div class="f-row"><label>Nombre</label><input id="f-nombre" type="text" placeholder="María" autocomplete="off" onkeydown="handleEnterNav(event,'f-apellido')"></div>
+          <div class="f-row"><label>Apellido</label><input id="f-apellido" type="text" placeholder="González" autocomplete="off" onkeydown="handleEnterNav(event,'f-fecha')"></div>
         </div>
-        <div class="f-row"><label>Fecha</label><input id="f-fecha" type="date"></div>
+        <div class="f-row"><label>Fecha</label><input id="f-fecha" type="date" onkeydown="handleEnterNav(event,'f-precio')"></div>
         <div class="f-row">
           <label>Servicio</label>
           <div class="svc-picker">
@@ -352,7 +354,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
         </div>
         <div class="f-row">
           <label>Precio cobrado ($)</label>
-          <input id="f-precio" type="number" placeholder="30000" min="0" inputmode="numeric">
+          <input id="f-precio" type="text" placeholder="30.000" inputmode="numeric" oninput="formatMoneyInput(this)" onkeydown="handleEnterNav(event,null)">
           <div class="f-hint">Base $30.000 — ajusta si cobras más</div>
         </div>
         <div class="f-row" id="quien-row">
@@ -367,7 +369,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
             <button class="seg-btn" id="seg-pd" onclick="selectPago('Pendiente')">⏳ Pendiente</button>
           </div>
         </div>
-        <button class="btn-main" onclick="registrar()">Registrar servicio</button>
+        <button class="btn-main" id="btn-registrar" onclick="registrar()">Registrar servicio</button>
       </div>
       <div id="cod-trigger">
         <button class="cod-btn" onclick="openCOD()">
@@ -381,6 +383,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
     <div class="sec" id="sec-resumen">
       <div class="sec-head"><h2>Resumen</h2><p>Contabilidad por mes</p></div>
       <select class="month-sel" id="res-mes" onchange="renderResumen()"></select>
+      <button class="btn-ghost" id="btn-reporte-mensual" onclick="generarReporteMensual()" style="display:none;width:100%;margin-bottom:14px">📄 Reporte mensual</button>
       <div class="metrics-row" id="res-metrics"><div class="spinner">Cargando...</div></div>
       <div id="workers-panels"></div>
       <!-- PENDIENTES PANEL -->
@@ -549,7 +552,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
         </button>
       </div>
     </div>
-    <div class="f-row"><label>Precio ($)</label><input id="e-precio" type="number" min="0" inputmode="numeric"></div>
+    <div class="f-row"><label>Precio ($)</label><input id="e-precio" type="text" inputmode="numeric" oninput="formatMoneyInput(this)"></div>
     <div class="f-row">
       <label>Realizado por</label>
       <select id="e-quien" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;-webkit-appearance:none"></select>
@@ -577,7 +580,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
     <input type="hidden" id="ad-edit-idx">
     <input type="hidden" id="ad-edit-worker">
     <div class="f-row"><label>Fecha</label><input id="ad-edit-fecha" type="date"></div>
-    <div class="f-row"><label>Monto ($)</label><input id="ad-edit-monto" type="number" min="0" inputmode="numeric" placeholder="Ej: 20000"></div>
+    <div class="f-row"><label>Monto ($)</label><input id="ad-edit-monto" type="text" inputmode="numeric" oninput="formatMoneyInput(this)" placeholder="Ej: 20.000"></div>
     <div class="f-row"><label>Razón</label><input id="ad-edit-razon" type="text" placeholder="Ej: Arriendo, mercado..." autocomplete="off"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="confirmDeleteAdelanto()" style="background:#FEF0EE;color:var(--danger);border:none">🗑 Eliminar</button>
@@ -639,6 +642,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzeOO-74jbuHkAnCwXyE2DxaHNLHtGos1LGn0QZVwdycM3dEJsEpcKV574OgwhwqIqD/exec';
 
@@ -814,6 +818,9 @@ function startApp(){
 
   // COD only for Fernanda
   document.getElementById('cod-trigger').style.display = isF ? 'block' : 'none';
+
+  // Monthly PDF report only for Fernanda
+  document.getElementById('btn-reporte-mensual').style.display = isF ? 'block' : 'none';
 
   // Hide Gráficos nav tab for workers
   document.getElementById('nav-graficos').style.display = isF ? 'flex' : 'none';
@@ -1021,10 +1028,13 @@ function hideLoading(){
 
 // ── REGISTER ──────────────────────────────────────────────────────
 async function registrar(){
+  const btn=document.getElementById('btn-registrar');
+  if(btn.disabled) return; // ignore repeated taps while the previous save is confirming
+
   const nombre=document.getElementById('f-nombre').value.trim();
   const apellido=document.getElementById('f-apellido').value.trim();
   const fecha=document.getElementById('f-fecha').value;
-  const precio=parseInt(document.getElementById('f-precio').value);
+  const precio=getMoneyValue(document.getElementById('f-precio'));
   const quien=currentUser==='fernanda'?document.getElementById('f-quien').value:(currentWorkerObj?.nombre||'');
   if(!nombre||!apellido||!fecha||!precio||precio<=0){showToast('Completa todos los campos',true);return;}
 
@@ -1035,9 +1045,17 @@ async function registrar(){
   allData.push(record); saveAll();
   document.getElementById('f-nombre').value='';
   document.getElementById('f-apellido').value='';
-  document.getElementById('f-precio').value='30000';
+  document.getElementById('f-precio').value='30.000';
   populateMonths(); renderResumen(); renderHistorial();
   showToast('✓ Servicio registrado');
+
+  // Visible confirmation on the button itself + brief lock so a slow/unsure tap
+  // doesn't turn into several duplicate registrations
+  const originalLabel=btn.textContent;
+  btn.disabled=true;
+  btn.classList.add('btn-success');
+  btn.textContent='✓ ¡Guardado!';
+  setTimeout(()=>{ btn.disabled=false; btn.classList.remove('btn-success'); btn.textContent=originalLabel; }, 1100);
 
   // 2 — Send to Sheets in background (no loading overlay blocking UI)
   sendToSheets(payload);
@@ -1062,7 +1080,7 @@ async function sendToSheets(payload, retries=2){
 
 // ── ADELANTOS ─────────────────────────────────────────────────────
 async function registrarAdelanto(workerId, mk){
-  const monto=parseInt(document.getElementById('ad-monto-'+workerId).value);
+  const monto=getMoneyValue(document.getElementById('ad-monto-'+workerId));
   const razon=(document.getElementById('ad-razon-'+workerId)?.value||'').trim();
   if(!monto||monto<=0){showToast('Ingresa un monto',true);return;}
   if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
@@ -1083,7 +1101,7 @@ function openEditAdelanto(idx, workerId){
   document.getElementById('ad-edit-idx').value = idx;
   document.getElementById('ad-edit-worker').value = workerId;
   document.getElementById('ad-edit-fecha').value = normalizeDate(a.fecha);
-  document.getElementById('ad-edit-monto').value = a.monto;
+  document.getElementById('ad-edit-monto').value = formatMoneyDisplay(a.monto);
   document.getElementById('ad-edit-razon').value = a.razon||'';
   openModal('adelanto-modal');
 }
@@ -1092,11 +1110,11 @@ async function saveEditAdelanto(){
   const idx = parseInt(document.getElementById('ad-edit-idx').value);
   const workerId = document.getElementById('ad-edit-worker').value;
   const fecha = document.getElementById('ad-edit-fecha').value;
-  const montoRaw = document.getElementById('ad-edit-monto').value;
-  const monto = parseInt(montoRaw);
+  const montoEl = document.getElementById('ad-edit-monto');
+  const monto = getMoneyValue(montoEl);
   const razon = document.getElementById('ad-edit-razon').value.trim();
   if(!fecha){showToast('Ingresa una fecha',true);return;}
-  if(montoRaw===''||isNaN(monto)||monto<0){showToast('Ingresa un monto válido',true);return;}
+  if(!montoEl.value.trim()||isNaN(monto)||monto<0){showToast('Ingresa un monto válido',true);return;}
   if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
   allAdelantos[idx] = {...allAdelantos[idx], fecha, monto, razon};
   saveAll();
@@ -1127,7 +1145,7 @@ function openEdit(id){
   document.getElementById('e-nombre').value=svc.nombre;
   document.getElementById('e-apellido').value=svc.apellido;
   document.getElementById('e-fecha').value=normalizeDate(svc.fecha);
-  document.getElementById('e-precio').value=svc.precio;
+  document.getElementById('e-precio').value=formatMoneyDisplay(svc.precio);
   document.getElementById('e-quien').value=svc.quien||'Fernanda';
   editServicioPick=svc.servicio||'Manicure';
   editPagoPick=svc.pago||'Efectivo';
@@ -1142,7 +1160,7 @@ async function saveEdit(){
   const nombre=document.getElementById('e-nombre').value.trim();
   const apellido=document.getElementById('e-apellido').value.trim();
   const fecha=document.getElementById('e-fecha').value;
-  const precio=parseInt(document.getElementById('e-precio').value);
+  const precio=getMoneyValue(document.getElementById('e-precio'));
   const quien=document.getElementById('e-quien').value;
   if(!nombre||!apellido||!fecha||!precio||precio<=0){showToast('Completa todos los campos',true);return;}
   const idx=allData.findIndex(s=>String(s.id)===String(id));
@@ -1273,7 +1291,7 @@ function selectServicio(v){
   selectedServicio=v;
   document.getElementById('spk-mani').classList.toggle('active',v==='Manicure');
   document.getElementById('spk-pedi').classList.toggle('active',v==='Pedicure');
-  document.getElementById('f-precio').value=30000;
+  document.getElementById('f-precio').value='30.000';
 }
 function selectPago(v){
   selectedPago=v;
@@ -1461,7 +1479,7 @@ function renderResumen(){
         </div>
         <div style="margin-top:14px;margin-bottom:6px;font-size:11px;font-weight:600;color:${c.text};text-transform:uppercase;letter-spacing:0.7px">Registrar adelanto</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <input type="number" id="ad-monto-${w.id}" placeholder="Monto $" min="0" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:14px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
+          <input type="text" id="ad-monto-${w.id}" placeholder="Monto $" inputmode="numeric" oninput="formatMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:14px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
           <input type="text" id="ad-razon-${w.id}" placeholder="Razón (ej: arriendo, mercado...)" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:14px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
           <button style="width:100%;padding:11px;background:${c.text};color:#fff;border:none;border-radius:var(--r8);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer" onclick="registrarAdelanto('${w.id}','${mk}')">+ Registrar adelanto</button>
         </div>
@@ -1539,6 +1557,139 @@ function renderResumen(){
 
   // Render pendientes (all-time, filtered by worker if not admin)
   renderPendientes(isF ? null : currentWorkerObj?.nombre);
+}
+
+// ── REPORTE MENSUAL (PDF) ─────────────────────────────────────────
+function prevMonthKey(mk){
+  const [y,m]=mk.split('-').map(Number);
+  const d=new Date(y,m-2,1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function monthStats(mk){
+  const svcs=allData.filter(s=>monthKey(s.fecha)===mk);
+  const sum=arr=>arr.reduce((t,s)=>t+parseInt(s.precio),0);
+  const mani=svcs.filter(s=>s.servicio==='Manicure');
+  const pedi=svcs.filter(s=>s.servicio==='Pedicure');
+  let aTrabajadoras=0, ferPart=0;
+  workers.forEach(w=>{ const st=getWorkerStats(w.id,w.nombre,mk); aTrabajadoras+=st.workerPart; ferPart+=st.fernandaPart; });
+  const ferOwn=sum(svcs.filter(s=>s.quien==='Fernanda'));
+  return {
+    mk, svcs, total:sum(svcs), count:svcs.length,
+    maniCount:mani.length, maniTotal:sum(mani),
+    pediCount:pedi.length, pediTotal:sum(pedi),
+    efectivo:sum(svcs.filter(s=>s.pago==='Efectivo')),
+    transferencia:sum(svcs.filter(s=>s.pago==='Transferencia')),
+    pendiente:sum(svcs.filter(s=>s.pago==='Pendiente')),
+    ferGana: ferOwn+ferPart, aTrabajadoras
+  };
+}
+function pctChange(cur,prev){ if(!prev) return cur>0?null:0; return Math.round(((cur-prev)/prev)*100); }
+function topClientas(svcs,n=5){
+  const map={};
+  svcs.forEach(s=>{ const k=s.nombre+' '+s.apellido; if(!map[k])map[k]={nombre:k,total:0,visitas:0}; map[k].total+=parseInt(s.precio); map[k].visitas++; });
+  return Object.values(map).sort((a,b)=>b.total-a.total).slice(0,n);
+}
+
+async function generarReporteMensual(){
+  if(typeof window.jspdf==='undefined'){ showToast('Generador de PDF aún cargando, intenta de nuevo en un momento',true); return; }
+  const mk=document.getElementById('res-mes').value;
+  if(!mk){ showToast('Selecciona un mes',true); return; }
+
+  const cur=monthStats(mk);
+  const prev=monthStats(prevMonthKey(mk));
+  const top5=topClientas(cur.svcs);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 48;
+  const rose=[200,80,111], ink=[30,20,25], gray=[130,120,125], line=[232,222,227];
+  let y = 64;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...ink);
+  doc.text('Nail Studio', margin, y);
+  y += 22;
+  doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(...gray);
+  doc.text('Reporte mensual — '+monthLabel(mk), margin, y);
+  y += 38;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor(...rose);
+  doc.text(fmt(cur.total), margin, y);
+  y += 18;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...gray);
+  const change = pctChange(cur.total, prev.total);
+  const changeTxt = change===null ? 'Sin datos de '+monthLabel(prev.mk)+' para comparar'
+    : change===0 ? 'Igual que '+monthLabel(prev.mk)
+    : (change>0?'▲ '+change+'% ':'▼ '+Math.abs(change)+'% ')+'vs. '+monthLabel(prev.mk)+' ('+fmt(prev.total)+')';
+  doc.text('Ingresos totales del mes  ·  '+changeTxt, margin, y);
+  y += 26;
+  doc.setDrawColor(...line); doc.line(margin, y, pageW-margin, y);
+  y += 28;
+
+  function row(label, curVal, prevVal, isMoney=true){
+    doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(...ink);
+    doc.text(label, margin, y);
+    doc.setFont('helvetica','bold');
+    doc.text(isMoney?fmt(curVal):String(curVal), pageW-margin, y, {align:'right'});
+    y += 15;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...gray);
+    const d = pctChange(curVal, prevVal);
+    const dTxt = d===null?'mes anterior sin datos':d===0?'igual que el mes anterior':(d>0?'+':'')+d+'% vs. mes anterior';
+    doc.text(dTxt, pageW-margin, y, {align:'right'});
+    y += 22;
+  }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...ink);
+  doc.text('Este mes vs. mes anterior', margin, y); y += 22;
+  row('Servicios realizados', cur.count, prev.count, false);
+  row('Manicure ('+cur.maniCount+')', cur.maniTotal, prev.maniTotal);
+  row('Pedicure ('+cur.pediCount+')', cur.pediTotal, prev.pediTotal);
+  row('Efectivo', cur.efectivo, prev.efectivo);
+  row('Transferencia', cur.transferencia, prev.transferencia);
+  if(cur.pendiente>0 || prev.pendiente>0) row('Pendiente de cobro', cur.pendiente, prev.pendiente);
+  row('Fernanda gana', cur.ferGana, prev.ferGana);
+  row('A trabajadoras', cur.aTrabajadoras, prev.aTrabajadoras);
+
+  y += 6;
+  doc.setDrawColor(...line); doc.line(margin, y, pageW-margin, y);
+  y += 28;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...ink);
+  doc.text('Top clientas del mes', margin, y); y += 22;
+  if(top5.length===0){
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...gray);
+    doc.text('Sin servicios registrados este mes', margin, y); y += 20;
+  } else {
+    top5.forEach((c,i)=>{
+      doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(...ink);
+      doc.text((i+1)+'. '+c.nombre, margin, y);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...gray);
+      doc.text(c.visitas+' visita'+(c.visitas>1?'s':''), margin+260, y);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...ink);
+      doc.text(fmt(c.total), pageW-margin, y, {align:'right'});
+      y += 20;
+    });
+  }
+
+  y += 10;
+  doc.setDrawColor(...line); doc.line(margin, y, pageW-margin, y);
+  y += 20;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...gray);
+  doc.text('Generado el '+fmtDateLong(today()), margin, y);
+
+  const fileName = 'Reporte-'+mk+'.pdf';
+  const pdfBlob = doc.output('blob');
+
+  if(navigator.canShare && navigator.canShare({files:[new File([pdfBlob],fileName,{type:'application/pdf'})]})){
+    try{
+      await navigator.share({files:[new File([pdfBlob],fileName,{type:'application/pdf'})], title:'Reporte mensual', text:'Reporte de '+monthLabel(mk)});
+    }catch(e){
+      if(e.name!=='AbortError') showToast('No se pudo compartir: '+e.message, true);
+    }
+  } else {
+    doc.save(fileName);
+    showToast('PDF descargado — compártelo por WhatsApp manualmente');
+  }
 }
 
 // ── HISTORIAL ─────────────────────────────────────────────────────
@@ -1855,6 +2006,19 @@ function showSec(id, btn){
 
 // ── TOAST ─────────────────────────────────────────────────────────
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'')+' show';setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ── MONEY INPUT (display with thousands dots, store/send as plain integer) ──
+function formatMoneyDisplay(n){ n=parseInt(n); return isNaN(n) ? '' : n.toLocaleString('es-CL'); }
+function formatMoneyInput(el){ const raw=el.value.replace(/[^\d]/g,''); el.value = raw ? parseInt(raw,10).toLocaleString('es-CL') : ''; }
+function getMoneyValue(el){ const raw=(el.value||'').replace(/[^\d]/g,''); return raw ? parseInt(raw,10) : NaN; }
+
+// ── ENTER-TO-NEXT-FIELD ───────────────────────────────────────────
+function handleEnterNav(e, nextId){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  if(nextId){ const next=document.getElementById(nextId); if(next) next.focus(); }
+  else if(document.activeElement) document.activeElement.blur();
+}
 
 init();
 </script>
