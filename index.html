@@ -1631,7 +1631,7 @@ async function generarReporteMensual(){
   const change = pctChange(cur.total, prev.total);
   const changeTxt = change===null ? 'Sin datos de '+monthLabel(prev.mk)+' para comparar'
     : change===0 ? 'Igual que '+monthLabel(prev.mk)
-    : (change>0?'▲ '+change+'% ':'▼ '+Math.abs(change)+'% ')+'vs. '+monthLabel(prev.mk)+' ('+fmt(prev.total)+')';
+    : (change>0?change+'% más que ':Math.abs(change)+'% menos que ')+monthLabel(prev.mk)+' ('+fmt(prev.total)+')';
   doc.text('Ingresos totales del mes  ·  '+changeTxt, margin, y);
   y += 26;
   doc.setDrawColor(...line); doc.line(margin, y, pageW-margin, y);
