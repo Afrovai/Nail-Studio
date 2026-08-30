@@ -899,7 +899,19 @@ async function syncPending(){const q=getPending();if(!q.length)return;showToast(
 function svcSig(s){ return [s.fecha,s.nombre,s.apellido,s.servicio,s.precio,s.quien,s.pago].join('|'); }
 function adSig(a){ return [a.workerId,a.fecha,a.monto,a.razon].join('|'); }
 
-async function fetchData(){
+let fetchDataPromise = null;
+function fetchData(){
+  // Reentrancy guard: without this, tapping "Recargar" more than once (or a
+  // second sync starting before the first finishes) runs the local-only
+  // reconciliation below twice in parallel — neither run sees the other's
+  // in-flight push yet, so both conclude the same record is unsynced and
+  // both push it, creating duplicate rows in the Sheet. Concurrent callers
+  // now just await the one run already in progress instead of starting a new one.
+  if(fetchDataPromise) return fetchDataPromise;
+  fetchDataPromise = fetchDataImpl().finally(()=>{ fetchDataPromise = null; });
+  return fetchDataPromise;
+}
+async function fetchDataImpl(){
   loadAll();
   migrateData();
   populateMonths(); renderResumen(); renderHistorial(); checkPending();
