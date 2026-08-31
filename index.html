@@ -681,7 +681,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20260831e';
+const APP_VERSION = 'v20260831f';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -1527,8 +1527,8 @@ function renderResumen(){
         </div>
         <div style="margin-top:14px;margin-bottom:6px;font-size:11px;font-weight:600;color:${c.text};text-transform:uppercase;letter-spacing:0.7px">Registrar adelanto</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <input type="text" id="ad-monto-${w.id}" placeholder="Monto $" inputmode="numeric" oninput="formatMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:16px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
-          <input type="text" id="ad-razon-${w.id}" placeholder="Razón (ej: arriendo, mercado...)" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:16px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
+          <input type="text" id="ad-monto-${w.id}" placeholder="Monto $" inputmode="numeric" autocomplete="off" oninput="formatMoneyInput(this)" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:16px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
+          <input type="text" id="ad-razon-${w.id}" placeholder="Razón (ej: arriendo, mercado...)" autocomplete="off" autocorrect="off" style="width:100%;padding:10px 12px;border:1.5px solid ${c.border};border-radius:var(--r8);font-size:16px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.7);color:var(--ink);outline:none">
           <button style="width:100%;padding:11px;background:${c.text};color:#fff;border:none;border-radius:var(--r8);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer" onclick="registrarAdelanto('${w.id}','${mk}',this)">+ Registrar adelanto</button>
         </div>
         <div class="adelanto-list">
