@@ -681,7 +681,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20260831a';
+const APP_VERSION = 'v20260831b';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -914,11 +914,6 @@ function addPending(item){const q=getPending();q.push(item);localStorage.setItem
 function checkPending(){const q=getPending();const b=document.getElementById('sync-bar');if(!b)return;if(q.length){b.style.display='flex';document.getElementById('pending-n').textContent=q.length;}else b.style.display='none';}
 async function syncPending(){const q=getPending();if(!q.length)return;showToast('Sincronizando...');let ok=0;for(const item of q){try{await apiPost(item);ok++;}catch(e){}}if(ok===q.length){localStorage.setItem('ns_pending','[]');showToast('Sincronizado ✓');fetchData();}else showToast('Error: '+ok+'/'+q.length,true);checkPending();}
 
-// Content signature (not id — the server assigns its own id on addService/addAdelanto,
-// independent from the client's local id, so id can't be used to detect already-synced records)
-function svcSig(s){ return [s.fecha,s.nombre,s.apellido,s.servicio,s.precio,s.quien,s.pago].join('|'); }
-function adSig(a){ return [a.workerId,a.fecha,a.monto,a.razon].join('|'); }
-
 let fetchDataPromise = null;
 function fetchData(){
   // Reentrancy guard: without this, tapping "Recargar" more than once (or a
@@ -947,48 +942,23 @@ async function fetchDataImpl(){
     catch(e){ throw new Error('Respuesta inválida del servidor'); }
     if(json.error) throw new Error(json.error);
 
-    const serverServices = json.services||[];
-    const serverAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
-
-    // Recover records that exist only on this device — e.g. writes that failed
-    // silently while the sync engine was broken (2026-08-10 → 2026-08-30) — before
-    // trusting the server list as the source of truth. Matches by content, not id,
-    // since a matching count is consumed per record so genuine duplicates aren't lost.
-    const svcCounts = new Map();
-    serverServices.forEach(s=>{ const k=svcSig(s); svcCounts.set(k,(svcCounts.get(k)||0)+1); });
-    const localOnlyServices = allData.filter(s=>{
-      const k=svcSig(s), n=svcCounts.get(k)||0;
-      if(n>0){ svcCounts.set(k,n-1); return false; }
-      return true;
-    });
-    const adCounts = new Map();
-    serverAdelantos.forEach(a=>{ const k=adSig(a); adCounts.set(k,(adCounts.get(k)||0)+1); });
-    const localOnlyAdelantos = allAdelantos.filter(a=>{
-      const k=adSig(a), n=adCounts.get(k)||0;
-      if(n>0){ adCounts.set(k,n-1); return false; }
-      return true;
-    });
-
-    if(localOnlyServices.length || localOnlyAdelantos.length){
-      showToast('Recuperando '+(localOnlyServices.length+localOnlyAdelantos.length)+' registro(s) sin sincronizar…');
-      for(const s of localOnlyServices){
-        const payload={action:'addService',nombre:s.nombre,apellido:s.apellido,fecha:s.fecha,servicio:s.servicio,precio:s.precio,quien:s.quien,pago:s.pago,registradoPor:s.registradoPor||s.quien,timestamp:s.timestamp||new Date().toISOString()};
-        try{ await apiPost(payload); }catch(e){ addPending(payload); }
-      }
-      for(const a of localOnlyAdelantos){
-        const payload={action:'addAdelanto',id:a.id,workerId:a.workerId,fecha:a.fecha,monto:a.monto,razon:a.razon,timestamp:a.timestamp||new Date().toISOString()};
-        try{ await apiPost(payload); }catch(e){ addPending(payload); }
-      }
-    }
-
-    allData = [...serverServices, ...localOnlyServices];
-    allAdelantos = [...serverAdelantos, ...localOnlyAdelantos];
+    // The server is the source of truth. Earlier (2026-08-10 → 2026-08-31) this
+    // function also auto-pushed any local-only-looking record to recover a real
+    // historical backlog from a sync outage — that backlog is now fully recovered
+    // and any leftover duplicates it created have been manually cleaned up in the
+    // Sheet. Keeping that auto-push logic active would be actively dangerous now:
+    // a device that still has old local copies of a duplicate row that we just
+    // deleted server-side would see server's count drop below its own local count
+    // and "helpfully" re-push the difference, resurrecting the very duplicates
+    // being cleaned up. New entries already have their own real-time sync path
+    // (registrar()/registrarAdelanto() → apiPost, retried, falling back to the
+    // ns_pending queue) — that path doesn't depend on this reconciliation at all.
+    allData = json.services||[];
+    allAdelantos = (json.adelantos||[]).map(a=>({...a, workerId: a.workerId||'ivete'}));
     migrateData();
     saveAll();
     populateMonths(); renderResumen(); renderHistorial();
-    showToast(localOnlyServices.length||localOnlyAdelantos.length
-      ? '✓ '+(localOnlyServices.length+localOnlyAdelantos.length)+' registro(s) recuperado(s) y sincronizado(s)'
-      : '✓ Datos actualizados');
+    showToast('✓ Datos actualizados');
   }catch(e){
     showToast('⚠️ '+e.message, true);
   }
