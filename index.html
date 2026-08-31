@@ -681,7 +681,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20260831b';
+const APP_VERSION = 'v20260831c';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -912,7 +912,26 @@ async function apiPost(payload){ const r=await fetch(SCRIPT_URL,{method:'POST',b
 function getPending(){return JSON.parse(localStorage.getItem('ns_pending')||'[]');}
 function addPending(item){const q=getPending();q.push(item);localStorage.setItem('ns_pending',JSON.stringify(q));checkPending();}
 function checkPending(){const q=getPending();const b=document.getElementById('sync-bar');if(!b)return;if(q.length){b.style.display='flex';document.getElementById('pending-n').textContent=q.length;}else b.style.display='none';}
-async function syncPending(){const q=getPending();if(!q.length)return;showToast('Sincronizando...');let ok=0;for(const item of q){try{await apiPost(item);ok++;}catch(e){}}if(ok===q.length){localStorage.setItem('ns_pending','[]');showToast('Sincronizado ✓');fetchData();}else showToast('Error: '+ok+'/'+q.length,true);checkPending();}
+async function syncPending(){
+  const q=getPending();if(!q.length)return;
+  const btn=document.activeElement;
+  btnBusy(btn,'Sincronizando...');
+  showLoading();
+  let ok=0;
+  for(const item of q){try{await apiPost(item);ok++;}catch(e){}}
+  if(ok===q.length){
+    localStorage.setItem('ns_pending','[]');
+    await fetchData();
+    hideLoading();
+    btnDone(btn,'✓ Listo');
+    showToast('Sincronizado ✓');
+  } else {
+    hideLoading();
+    btnReset(btn);
+    showToast('Error: '+ok+'/'+q.length,true);
+  }
+  checkPending();
+}
 
 let fetchDataPromise = null;
 function fetchData(){
@@ -964,7 +983,14 @@ async function fetchDataImpl(){
   }
 }
 
-async function syncAll(){ await fetchData(); }
+async function syncAll(){
+  const btn=document.activeElement;
+  btnBusy(btn,'Sincronizando...');
+  showLoading();
+  await fetchData();
+  hideLoading();
+  btnDone(btn,'✓ Listo');
+}
 
 async function runDiagnostic(){
   const el = document.getElementById('diag-result');
@@ -994,7 +1020,12 @@ async function runDiagnostic(){
 }
 
 async function forceSync(){
+  const btn=document.activeElement;
+  btnBusy(btn,'Recargando...');
+  showLoading();
   await fetchData();
+  hideLoading();
+  btnDone(btn,'✓ Listo');
 }
 
 // ── AFRO MESSAGES 💅 ──────────────────────────────────────────────
@@ -1089,10 +1120,12 @@ async function sendToSheets(payload, retries=2){
 
 // ── ADELANTOS ─────────────────────────────────────────────────────
 async function registrarAdelanto(workerId, mk){
+  const btn=document.activeElement;
   const monto=getMoneyValue(document.getElementById('ad-monto-'+workerId));
   const razon=(document.getElementById('ad-razon-'+workerId)?.value||'').trim();
   if(!monto||monto<=0){showToast('Ingresa un monto',true);return;}
   if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
+  btnBusy(btn,'Guardando...');
   const fecha=mk+'-'+String(new Date().getDate()).padStart(2,'0');
   const id=Date.now();
   const payload={action:'addAdelanto',id,workerId,fecha,monto,razon,timestamp:new Date().toISOString()};
@@ -1101,7 +1134,7 @@ async function registrarAdelanto(workerId, mk){
   catch(e){addPending(payload);showToast('Adelanto guardado sin conexión');}
   document.getElementById('ad-monto-'+workerId).value='';
   if(document.getElementById('ad-razon-'+workerId)) document.getElementById('ad-razon-'+workerId).value='';
-  renderResumen();
+  renderResumen(); // rebuilds the panel — the refreshed list is itself the "done" signal
 }
 
 function openEditAdelanto(idx, workerId){
@@ -1116,6 +1149,7 @@ function openEditAdelanto(idx, workerId){
 }
 
 async function saveEditAdelanto(){
+  const btn=document.activeElement;
   const idx = parseInt(document.getElementById('ad-edit-idx').value);
   const workerId = document.getElementById('ad-edit-worker').value;
   const fecha = document.getElementById('ad-edit-fecha').value;
@@ -1125,23 +1159,28 @@ async function saveEditAdelanto(){
   if(!fecha){showToast('Ingresa una fecha',true);return;}
   if(!montoEl.value.trim()||isNaN(monto)||monto<0){showToast('Ingresa un monto válido',true);return;}
   if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
+  btnBusy(btn,'Guardando...');
   allAdelantos[idx] = {...allAdelantos[idx], fecha, monto, razon};
   saveAll();
   const payload={action:'editAdelanto',id:allAdelantos[idx].id,workerId,fecha,monto,razon};
   try{await apiPost(payload);showToast('✓ Adelanto actualizado');}
   catch(e){addPending(payload);showToast('Guardado sin conexión');}
+  btnReset(btn);
   closeModal('adelanto-modal');renderResumen();
 }
 
 async function confirmDeleteAdelanto(){
+  const btn=document.activeElement;
   const idx = parseInt(document.getElementById('ad-edit-idx').value);
   const a = allAdelantos[idx];
   if(!a||!confirm('¿Eliminar este adelanto de '+fmt(a.monto)+'?'))return;
+  btnBusy(btn,'Eliminando...');
   const payload={action:'deleteAdelanto',id:a.id};
   allAdelantos.splice(idx,1);
   saveAll();
   try{await apiPost(payload);showToast('Adelanto eliminado');}
   catch(e){addPending(payload);showToast('Eliminado localmente');}
+  btnReset(btn);
   closeModal('adelanto-modal');renderResumen();
 }
 
@@ -1165,6 +1204,7 @@ function openEdit(id){
   openModal('edit-modal');
 }
 async function saveEdit(){
+  const btn=document.activeElement;
   const id=document.getElementById('edit-id').value;
   const nombre=document.getElementById('e-nombre').value.trim();
   const apellido=document.getElementById('e-apellido').value.trim();
@@ -1174,11 +1214,13 @@ async function saveEdit(){
   if(!nombre||!apellido||!fecha||!precio||precio<=0){showToast('Completa todos los campos',true);return;}
   const idx=allData.findIndex(s=>String(s.id)===String(id));
   if(idx===-1)return;
+  btnBusy(btn,'Guardando...');
   allData[idx]={...allData[idx],nombre,apellido,fecha,servicio:editServicioPick,precio,quien,pago:editPagoPick};
   saveAll();
   const payload={action:'editService',id,nombre,apellido,fecha,servicio:editServicioPick,precio,quien,pago:editPagoPick};
   try{await apiPost(payload);showToast('✓ Servicio actualizado');}
   catch(e){addPending(payload);showToast('Guardado sin conexión');}
+  btnReset(btn);
   closeModal('edit-modal');populateMonths();renderResumen();renderHistorial();
 }
 function confirmDelete(id){
@@ -2035,6 +2077,42 @@ function showSec(id, btn){
 
 // ── TOAST ─────────────────────────────────────────────────────────
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'')+' show';setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ── BUTTON LOADING STATE ─────────────────────────────────────────
+// Applied to whatever button triggered the action (document.activeElement at
+// call time), so every tap gives a clear "trabajando..." / "listo" signal
+// instead of leaving the user unsure whether to wait or tap again.
+function btnBusy(btn, label){
+  if(!btn || btn.tagName!=='BUTTON' || btn.disabled) return null;
+  btn.dataset.origLabel = btn.textContent;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.style.cursor = 'wait';
+  if(label) btn.textContent = label;
+  return btn;
+}
+function btnDone(btn, label, ms){
+  if(!btn) return;
+  btn.style.background = '#2E9E5B';
+  btn.style.color = '#fff';
+  btn.style.opacity = '1';
+  if(label) btn.textContent = label;
+  setTimeout(()=>{
+    btn.disabled = false;
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.cursor = '';
+    btn.style.opacity = '';
+    btn.textContent = btn.dataset.origLabel || btn.textContent;
+  }, ms||900);
+}
+function btnReset(btn){
+  if(!btn) return;
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.cursor = '';
+  btn.textContent = btn.dataset.origLabel || btn.textContent;
+}
 
 // ── MONEY INPUT (display with thousands dots, store/send as plain integer) ──
 function formatMoneyDisplay(n){ n=parseInt(n); return isNaN(n) ? '' : n.toLocaleString('es-CL'); }
