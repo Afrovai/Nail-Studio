@@ -677,7 +677,27 @@ const WORKER_COLORS = {
 };
 
 // ── INIT ───────────────────────────────────────────────────────────
-function init(){
+// Bump this string on every deploy. Phones (especially bookmarked/home-screen
+// pages) can keep running an old cached copy of this file for a long time —
+// ensureLatestVersion() catches that and force-reloads before anything else
+// runs, so a stale device can never silently keep executing old sync logic.
+const APP_VERSION = 'v20260831a';
+async function ensureLatestVersion(){
+  if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
+  try{
+    const res = await fetch(location.pathname + '?_v=' + Date.now(), {cache:'no-store'});
+    const text = await res.text();
+    const m = text.match(/const APP_VERSION = '([^']+)'/);
+    if(m && m[1] !== APP_VERSION){
+      location.replace(location.pathname + '?_cb=' + Date.now());
+      return true;
+    }
+  }catch(e){ /* offline or network hiccup — proceed with whatever is already loaded */ }
+  return false;
+}
+
+async function init(){
+  if(await ensureLatestVersion()) return; // page is about to hard-reload to the current version
   loadAll();
   buildLoginOptions();
   const saved = sessionStorage.getItem('ns_user');
