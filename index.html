@@ -194,7 +194,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 .cod-close-btn{width:100%;padding:15px;background:var(--rose);color:#fff;border:none;border-radius:var(--r12);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:20px}
 
 /* WELCOME SPLASH */
-.welcome-splash{position:fixed;inset:0;z-index:600;background:linear-gradient(135deg,var(--rose),var(--plum));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;animation:splashOut 0.5s ease 3.2s forwards}
+.welcome-splash{position:fixed;inset:0;z-index:600;background:linear-gradient(135deg,var(--rose),var(--plum));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;animation:splashOut 0.5s ease 5.5s forwards}
 @keyframes splashOut{to{opacity:0;pointer-events:none}}
 .welcome-logo{font-size:64px;margin-bottom:16px;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes popIn{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
@@ -634,7 +634,7 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 </div>
 
 <!-- WELCOME SPLASH -->
-<div class="welcome-splash" id="welcome-splash">
+<div class="welcome-splash" id="welcome-splash" onclick="this.style.display='none'">
   <div class="welcome-logo">💅</div>
   <div class="welcome-title">Nail Studio</div>
   <div class="welcome-msg" id="welcome-msg"></div>
@@ -687,7 +687,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20261001c';
+const APP_VERSION = 'v20261001d';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -775,7 +775,7 @@ function showWelcomeSplash(){
   splash.style.animation = ''; // reset
   splash.style.display = 'flex';
   // Remove after animation completes
-  setTimeout(()=>{ splash.style.display='none'; }, 3700);
+  setTimeout(()=>{ splash.style.display='none'; }, 6000);
 }
 
 function showScreen(id){
@@ -1059,21 +1059,40 @@ async function forceSync(btn){
 
 // ── AFRO MESSAGES 💅 ──────────────────────────────────────────────
 const AFRO_MSGS = [
+  // Clásicos
   "¿Sabías que estar con un pianista mejora tu vida en un 200%? 🎹",
   "Todos tus problemas tienen una solución. Llama al Afro 📞",
   "Las clientas felices y el Afro... las dos cosas más importantes 💅",
-  "¿Sabías que los pianistas son mejores novios? Dato científico 🎹",
-  "Cargando... el Afro toca Chopin para que esperes mejor 🎶",
   "Un pianista al día mantiene el estrés alejado 🎹",
   "¿Problemas? El Afro tiene 88 teclas y una solución para cada uno ⬛⬜",
-  "Las mejores uñas del mundo, el mejor novio del mundo. Todo en uno 💖",
   "¿Sabías que vivir con música de piano aumenta la productividad? Coincidencia... 🎵",
   "Cargando con amor pianístico ☁️",
-  "El Afro dice que eres su clienta favorita. Y su novia favorita 🏆",
   "Dato: el 100% de las personas que llaman al Afro se sienten mejor 📊",
   "Las notas del piano y tus ingresos... ambos van para arriba 📈🎹",
   "¿Sabías que los pianistas cocinan mejor? Otro dato científico 👨‍🍳",
   "Sincronizando... el Afro ya preparó la playlist para esta noche 🎧",
+  // Datos científicos
+  "Dato científico: los pianistas son los mejores en la cama. Lo dice la ciencia, no el Afro 🎹🔥",
+  "Si mueve así los dedos en el piano… imagínate cómo… cocina 👨‍🍳😏",
+  "Estudios confirman: 10 dedos bien entrenados resuelven cualquier problema 🖐️🎹",
+  "Un pianista sabe exactamente cuándo ir suave y cuándo ir fortissimo 🎼😉",
+  "Dato: los pianistas tienen excelente ritmo. En todo. 🥁",
+  "La ciencia no se equivoca: quien practica escalas todos los días, sube y baja sin cansarse 📈🎹",
+  "Harvard confirma: los pianistas saben usar las dos manos al mismo tiempo 🎓🙌",
+  // Afro On Tour Online On Fire
+  "Deja de negarte a la felicidad y viaja por el mundo con Afro On Tour Online On Fire. ¡Fiuuuum! ✈️🔥",
+  "Afro On Tour Online On Fire: destinos paradisíacos, música en vivo y guía personal incluido. ¡Chaaan! 🌴🎹",
+  "¿Vacaciones? Afro On Tour Online On Fire. ¿Problemas? Afro On Tour Online On Fire. ¿Hambre? También. ¡Ñam! 🍝✈️",
+  // Románticos (que se descarrilan)
+  "Eres tan dulce como una mermelada de moras con arándanos, plátano, sal de mar, chancaca, perejil y harina tostada 🍯",
+  "Tus ojos brillan como las estrellas, como la luna, como el sol… como la pelada de don Hernán en pleno verano ✨👨‍🦲",
+  "Cada vez que sonríes, el mundo se detiene… y un perro en Puente Alto ladra sin razón aparente 🌍🐕",
+  "Eres la melodía más hermosa que he escuchado, después del jingle del camión del gas 🎶🚚",
+  "Si fueras una flor, serías la más bella del jardín, con espinas, abono, lombrices y un gnomo de cemento mirándote raro 🌹",
+  "Tienes la belleza de un amanecer en la playa, con olas, gaviotas, brisa marina y un caballero en sunga comiendo un completo 🌅🌭",
+  "Contigo el tiempo vuela, como las palomas de la Plaza de Armas cuando alguien bota una sopaipilla 🕊️",
+  "Eres tan especial como la primera nevada del invierno, la primera flor de primavera y el último pan de la bolsa que nadie se atreve a sacar 🍞",
+  "Eres como un poema de Neruda: profunda, hermosa, inolvidable… y nadie entiende la mitad 📖",
 ];
 
 function afroMsg(){ return AFRO_MSGS[Math.floor(Math.random()*AFRO_MSGS.length)]; }
@@ -1082,13 +1101,13 @@ let loadingTimer = null;
 function showLoading(){
   document.getElementById('loading-msg').textContent = afroMsg();
   document.getElementById('loading-overlay').classList.add('show');
-  // Rotate messages every 2.5s in case it takes long
+  // Rotate messages every 5s in case it takes long (long enough to read one)
   loadingTimer = setInterval(()=>{
     const el = document.getElementById('loading-msg');
     el.style.animation='none'; el.offsetHeight; // reflow
     el.style.animation='';
     el.textContent = afroMsg();
-  }, 2500);
+  }, 5000);
 }
 function hideLoading(){
   clearInterval(loadingTimer);
