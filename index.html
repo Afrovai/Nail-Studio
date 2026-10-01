@@ -194,8 +194,10 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 .cod-close-btn{width:100%;padding:15px;background:var(--rose);color:#fff;border:none;border-radius:var(--r12);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:20px}
 
 /* WELCOME SPLASH */
-.welcome-splash{position:fixed;inset:0;z-index:600;background:linear-gradient(135deg,var(--rose),var(--plum));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;animation:splashOut 0.5s ease 5.5s forwards}
+.welcome-splash{position:fixed;inset:0;z-index:600;background:linear-gradient(135deg,var(--rose),var(--plum));display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px;cursor:pointer}
+.welcome-splash.out{animation:splashOut 0.3s ease forwards}
 @keyframes splashOut{to{opacity:0;pointer-events:none}}
+.welcome-hint{position:absolute;bottom:calc(40px + env(safe-area-inset-bottom));font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.5px}
 .welcome-logo{font-size:64px;margin-bottom:16px;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes popIn{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
 .welcome-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:500;color:#fff;margin-bottom:8px;letter-spacing:-0.5px}
@@ -634,10 +636,11 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 </div>
 
 <!-- WELCOME SPLASH -->
-<div class="welcome-splash" id="welcome-splash" onclick="this.style.display='none'">
+<div class="welcome-splash" id="welcome-splash" onclick="closeWelcomeSplash()">
   <div class="welcome-logo">💅</div>
   <div class="welcome-title">Nail Studio</div>
   <div class="welcome-msg" id="welcome-msg"></div>
+  <div class="welcome-hint">Toca para continuar</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -687,7 +690,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20261001d';
+const APP_VERSION = 'v20261001e';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -771,11 +774,17 @@ function buildLoginOptions(){
 function showWelcomeSplash(){
   const msg = AFRO_MSGS[Math.floor(Math.random()*AFRO_MSGS.length)];
   document.getElementById('welcome-msg').textContent = msg;
+  // Stays up until tapped, so the message can always be read. (It used to
+  // fade on a timer that started at page load, so after a slow PIN entry it
+  // was already invisible by the time it appeared.)
   const splash = document.getElementById('welcome-splash');
-  splash.style.animation = ''; // reset
+  splash.classList.remove('out');
   splash.style.display = 'flex';
-  // Remove after animation completes
-  setTimeout(()=>{ splash.style.display='none'; }, 6000);
+}
+function closeWelcomeSplash(){
+  const splash = document.getElementById('welcome-splash');
+  splash.classList.add('out');
+  setTimeout(()=>{ splash.style.display='none'; splash.classList.remove('out'); }, 300);
 }
 
 function showScreen(id){
