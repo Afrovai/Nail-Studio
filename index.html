@@ -681,7 +681,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20260831f';
+const APP_VERSION = 'v20261001b';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -1568,11 +1568,12 @@ function renderResumen(){
     // Worker view: only see their own
     const w = currentWorkerObj;
     const st = getWorkerStats(w.id, w.nombre, mk);
+    const myAdv = allAdelantos.filter(a=>(a.workerId===w.id||(!a.workerId&&w.id==='ivete'))&&monthKey(a.fecha)===mk).sort((a,b)=>a.fecha<b.fecha?-1:1);
     document.getElementById('res-metrics').innerHTML=`
       <div class="metric"><div class="metric-lbl">Total generado</div><div class="metric-val">${fmt(st.total)}</div></div>
       <div class="metric"><div class="metric-lbl">Servicios</div><div class="metric-val">${st.svcs.length}</div></div>
       <div class="metric"><div class="metric-lbl">Me corresponde</div><div class="metric-val plum">${fmt(st.workerPart)}</div></div>
-      <div class="metric"><div class="metric-lbl">Adelantos</div><div class="metric-val">${fmt(st.adv)}</div></div>
+      <div class="metric"><div class="metric-lbl">Adelantos</div><div class="metric-val">${fmt(st.adv)}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:4px">${myAdv.length} pedido${myAdv.length===1?'':'s'}</div></div>
       ${st.pendingTotal>0?`<div class="metric" style="border-color:#F5D99A;background:#FFFBF0;grid-column:1/-1"><div class="metric-lbl" style="color:#8A6200">⏳ De los cuales, pendiente de cobro</div><div class="metric-val" style="color:#B05A00;font-size:18px">${fmt(st.pendingTotal)}</div></div>`:''}
     `;
     // Worker pending panel (her own only)
@@ -1590,7 +1591,37 @@ function renderResumen(){
     } else {
       document.getElementById('pendientes-panel').innerHTML='';
     }
-    document.getElementById('workers-panels').innerHTML='';
+    // Worker's own breakdown + advances this month — same panel Fernanda sees, read-only
+    const c=WORKER_COLORS[w.color]||WORKER_COLORS.plum;
+    document.getElementById('workers-panels').innerHTML = `<div class="worker-panel" style="background:${c.panelBg};border:1px solid ${c.border}">
+        <div class="worker-panel-head">
+          <strong style="color:${c.text}">${w.nombre}</strong>
+          <span class="worker-tag" style="background:rgba(0,0,0,0.08);color:${c.text}">${w.pct}%</span>
+        </div>
+        <div class="worker-row"><span style="color:${c.text}">💵 Efectivo</span><span>${fmt(st.cashTotal)}</span></div>
+        <div class="worker-row"><span style="color:${c.text}">📲 Transferencia</span><span>${fmt(st.transfTotal)}</span></div>
+        ${st.pendingTotal>0?`<div class="worker-row"><span style="color:#8A6200">⏳ Pendiente</span><span style="color:#B05A00">${fmt(st.pendingTotal)}</span></div>`:''}
+        <div class="worker-divider" style="background:${c.border}"></div>
+        <div class="worker-row"><span style="color:${c.text}">Total generado</span><span style="font-weight:700">${fmt(st.total)}</span></div>
+        <div class="worker-row"><span style="color:${c.text}">Me corresponde (${w.pct}%)</span><span>${fmt(st.workerPart)}</span></div>
+        <div class="worker-row"><span style="color:${c.text}">Adelantos (${myAdv.length})</span><span style="color:var(--danger)">-${fmt(st.adv)}</span></div>
+        <div class="worker-divider" style="background:${c.border}"></div>
+        <div class="worker-total">
+          <span style="color:${c.text}">Saldo a pagar</span>
+          <span class="worker-total-val" style="color:${st.saldo>=0?'var(--success)':'var(--danger)'}">${fmt(Math.abs(st.saldo))}${st.saldo<0?' ⚠️':''}</span>
+        </div>
+        ${myAdv.length?`<div style="margin-top:14px;margin-bottom:6px;font-size:11px;font-weight:600;color:${c.text};text-transform:uppercase;letter-spacing:0.7px">Detalle de adelantos</div>`:''}
+        <div class="adelanto-list">
+          ${myAdv.map(a=>`
+            <div class="adelanto-item">
+              <div>
+                <span>${fmtDateShort(a.fecha)}</span>
+                ${a.razon?`<span style="font-size:11px;color:#6B5E98;margin-left:6px;font-weight:300">· ${a.razon}</span>`:''}
+              </div>
+              <span class="adelanto-amount">-${fmt(a.monto)}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
   }
 
   const allSvcsMonth = isF ? allData.filter(s=>monthKey(s.fecha)===mk) : allData.filter(s=>monthKey(s.fecha)===mk&&s.quien?.toLowerCase()===currentWorkerObj?.nombre?.toLowerCase());
