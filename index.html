@@ -690,7 +690,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20261001f';
+const APP_VERSION = 'v20261001g';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -772,7 +772,7 @@ function buildLoginOptions(){
 }
 
 function showWelcomeSplash(){
-  const msg = AFRO_MSGS[Math.floor(Math.random()*AFRO_MSGS.length)];
+  const msg = afroMsg();
   document.getElementById('welcome-msg').textContent = msg;
   // Stays up until tapped, so the message can always be read. (It used to
   // fade on a timer that started at page load, so after a slow PIN entry it
@@ -1113,7 +1113,11 @@ const AFRO_MSGS = [
   "Eres como un poema de Neruda: profunda, hermosa, inolvidable… y nadie entiende la mitad 📖",
 ];
 
-function afroMsg(){ return AFRO_MSGS[Math.floor(Math.random()*AFRO_MSGS.length)]; }
+// "Buenos días" messages only before noon, Chile time
+function afroMsg(){
+  const pool = chileHour()<12 ? AFRO_MSGS : AFRO_MSGS.filter(m=>!/buenos días/i.test(m));
+  return pool[Math.floor(Math.random()*pool.length)];
+}
 
 let loadingTimer = null;
 function showLoading(){
@@ -1191,7 +1195,7 @@ async function registrarAdelanto(workerId, mk, btn){
   if(!monto||monto<=0){showToast('Ingresa un monto',true);return;}
   if(!razon){showToast('Ingresa la razón del adelanto',true);return;}
   btnBusy(btn,'Guardando...');
-  const fecha=mk+'-'+String(new Date().getDate()).padStart(2,'0');
+  const fecha=mk+'-'+today().substring(8,10);
   const id=Date.now();
   const payload={action:'addAdelanto',id,workerId,fecha,monto,razon,timestamp:new Date().toISOString()};
   allAdelantos.push({id,workerId,fecha,monto,razon});saveAll();
@@ -1429,7 +1433,11 @@ function changeWorkerPin(){
 }
 
 // ── HELPERS ────────────────────────────────────────────────────────
-function today(){return new Date().toISOString().split('T')[0];}
+// Dates are always Chile time (America/Santiago), regardless of the device's
+// timezone. toISOString() is UTC, which rolled over to tomorrow at 20:00/21:00.
+const TZ='America/Santiago';
+function today(){return new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function chileHour(){return parseInt(new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',hourCycle:'h23'}).format(new Date()),10);}
 function fmt(n){return '$'+Math.round(n).toLocaleString('es-CL');}
 function normalizeDate(d){
   if(!d)return '';const s=String(d).trim();
@@ -1444,7 +1452,7 @@ function fmtDateLong(d){const n=normalizeDate(d);if(!n)return '';const dt=new Da
 function weekStart(ds){const d=new Date(ds+'T12:00:00');const day=d.getDay();const diff=d.getDate()-(day===0?6:day-1);const m=new Date(d);m.setDate(diff);return m.toISOString().split('T')[0];}
 function weekEnd(ds){const ws=weekStart(ds);const d=new Date(ws+'T12:00:00');d.setDate(d.getDate()+6);return d.toISOString().split('T')[0];}
 function allMonths(){const keys=new Set(allData.map(s=>monthKey(s.fecha)).filter(Boolean));allAdelantos.forEach(a=>{const mk=monthKey(a.fecha);if(mk)keys.add(mk);});keys.add(today().substring(0,7));return[...keys].sort().reverse();}
-function allYears(){const years=new Set(allData.map(s=>normalizeDate(s.fecha).substring(0,4)).filter(Boolean));years.add(new Date().getFullYear().toString());return[...years].sort().reverse();}
+function allYears(){const years=new Set(allData.map(s=>normalizeDate(s.fecha).substring(0,4)).filter(Boolean));years.add(today().substring(0,4));return[...years].sort().reverse();}
 function populateYears(){const years=allYears();const sel=document.getElementById('hist-ano');const cur=sel.value||years[0];sel.innerHTML=years.map(y=>`<option value="${y}"${y===cur?' selected':''}>${y}</option>`).join('');}
 function populateMonths(){const ms=allMonths();['res-mes','hist-mes'].forEach(id=>{const sel=document.getElementById(id);const cur=sel.value||ms[0];sel.innerHTML=ms.map(m=>`<option value="${m}"${m===cur?' selected':''}>${monthLabel(m)}</option>`).join('');});populateYears();}
 
@@ -2070,7 +2078,7 @@ function renderClientCard(client){
 // ── YEAR FILTER ───────────────────────────────────────────────────
 function allYears(){
   const years = new Set(allData.map(s=>normalizeDate(s.fecha).substring(0,4)).filter(Boolean));
-  years.add(new Date().getFullYear().toString());
+  years.add(today().substring(0,4));
   return [...years].sort().reverse();
 }
 
