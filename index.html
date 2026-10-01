@@ -67,6 +67,8 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
 .user-chip{display:flex;align-items:center;gap:6px;background:var(--rose-pale);padding:6px 12px 6px 8px;border-radius:20px;cursor:pointer}
 .user-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
 .user-name{font-size:12px;font-weight:600;color:var(--rose-deep)}
+.viewas-bar{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+.viewas-bar select{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--r8);font-size:16px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);outline:none}
 
 /* NAV */
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--white);border-top:1px solid var(--border-soft);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
@@ -322,6 +324,10 @@ html,body{height:100%;background:var(--cream);color:var(--ink);font-family:'DM S
           <div class="user-avatar" id="hdr-avatar"></div>
           <span class="user-name" id="hdr-name"></span>
         </div>
+      </div>
+      <div class="viewas-bar" id="viewas-bar" style="display:none">
+        <span>👁 Ver como</span>
+        <select id="viewas-sel" onchange="switchView(this.value)"></select>
       </div>
     </div>
 
@@ -681,7 +687,7 @@ const WORKER_COLORS = {
 // pages) can keep running an old cached copy of this file for a long time —
 // ensureLatestVersion() catches that and force-reloads before anything else
 // runs, so a stale device can never silently keep executing old sync logic.
-const APP_VERSION = 'v20261001b';
+const APP_VERSION = 'v20261001c';
 async function ensureLatestVersion(){
   if(location.search.includes('_cb=')) return false; // already force-reloaded once, don't loop
   try{
@@ -820,9 +826,35 @@ function logout(){
   updatePinDots(); showScreen('login');
 }
 
+// ── VER COMO (solo Nicolas) ────────────────────────────────────────
+// Nicolas can preview the app as Fernanda (admin) or as any worker without
+// logging out. Only currentUser changes; the session (ns_user) stays 'nicolas',
+// so a reload always comes back to his own admin view.
+function canSwitchView(){ return sessionStorage.getItem('ns_user')==='nicolas'; }
+function buildViewAsSelect(){
+  const bar=document.getElementById('viewas-bar');
+  if(!canSwitchView()){ bar.style.display='none'; return; }
+  const sel=document.getElementById('viewas-sel');
+  sel.innerHTML='<option value="nicolas">💗 Fernanda (admin)</option>'+workers.map(w=>`<option value="${w.id}">💜 ${w.nombre}</option>`).join('');
+  sel.value=currentUser;
+  bar.style.display='flex';
+}
+function switchView(id){
+  if(!canSwitchView()) return;
+  currentUser=id; resolveCurrentWorker();
+  applyRoleUI();
+  const active=document.querySelector('.sec.active')?.id.replace('sec-','')||'resumen';
+  showSec(active==='graficos'&&!isAdmin(id)?'resumen':active);
+  showToast('Viendo como '+(isAdmin(id)?'Fernanda (admin)':currentWorkerObj?.nombre));
+}
+
 // ── START APP ──────────────────────────────────────────────────────
 function startApp(){
   showScreen('app');
+  applyRoleUI();
+  fetchData();
+}
+function applyRoleUI(){
   const isF = isAdmin(currentUser);
   const name = isF ? adminName(currentUser) : currentWorkerObj?.nombre || currentUser;
   const initials = name.charAt(0).toUpperCase();
@@ -859,7 +891,7 @@ function startApp(){
   rebuildQuienSelect();
   rebuildEditQuienSelect();
   renderWorkersList();
-  fetchData();
+  buildViewAsSelect();
 }
 
 function rebuildHistQuienFilter(){
